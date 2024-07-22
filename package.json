@@ -1,0 +1,24 @@
+{
+  "name": "spend-team",
+  "version": "1.0.0",
+  "description": "lambdas to respond to cost-alerts written in typescript",
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild index.ts --bundle --minify --sourcemap --platform=node --target=es2020 --outfile=dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robertwilkinson9/spend-team.git"
+  },
+  "author": "robert wilkinson",
+  "license": "LGPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/robertwilkinson9/spend-team/issues"
+  },
+  "homepage": "https://github.com/robertwilkinson9/spend-team#readme",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.141",
+    "esbuild": "^0.23.0"
+  }
+}
