@@ -65,7 +65,7 @@ aws lambda update-function-code --function-name spend-team-lambda  --image-uri 7
  curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d @al1.json
 
 
-e.g. ALSO can run the lambda this way - not sure how to supply it data yet?
+e.g. ALSO can invoke the lambda this way - not sure how to supply it data yet?
 
 robert@CIC001419:~/src/typescript/spend-team$ aws lambda invoke --function-name spend-team-lambda new1.json
 {
