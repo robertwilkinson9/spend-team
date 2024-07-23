@@ -1,0 +1,82 @@
+1. login to docker via:
+ aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 778666285893.dkr.ecr.eu-west-2.amazonaws.com
+e.g.
+
+robert@CIC001419:~/src/typescript/spend-team$ aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 778666285893.dkr.ecr.eu-west-2.amazonaws.com
+WARNING! Your password will be stored unencrypted in /home/robert/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+Login Succeeded
+robert@CIC001419:~/src/typescript/spend-team$
+
+You need to have up-to-date ENV variable from Playground!
+
+2. Create an ECR (Elastic Container Registry) entry for spend-team-lambda. Only need to do the registration once.
+ aws ecr create-repository --repository-name spend-team-lambda --region eu-west-2 --image-scanning-configuration scanOnPush=true --image-tag-mutability MUTABLE
+
+e.g.
+
+robert@CIC001419:~/src/typescript/spend-team$ aws ecr create-repository --repository-name spend-team-lambda --region eu-west-2 --image-scanning-configuration scanOnPush=true --image-tag-mutability MUTABLE
+{
+    "repository": {
+        "repositoryArn": "arn:aws:ecr:eu-west-2:778666285893:repository/spend-team-lambda",
+        "registryId": "778666285893",
+        "repositoryName": "spend-team-lambda",
+        "repositoryUri": "778666285893.dkr.ecr.eu-west-2.amazonaws.com/spend-team-lambda",
+        "createdAt": 1721726890.674,
+        "imageTagMutability": "MUTABLE",
+        "imageScanningConfiguration": {
+            "scanOnPush": true
+        },
+        "encryptionConfiguration": {
+            "encryptionType": "AES256"
+        }
+    }
+}
+
+3. Build the docker image (tagged spend-team-lambda:latest).
+ docker build --platform linux/amd64 -t spend-team-lambda:latest .
+4. Tag the latest image we built in 3 with the ECR name.
+ docker tag spend-team-lambda:latest 778666285893.dkr.ecr.eu-west-2.amazonaws.com
+5. Then push the docker image
+ docker push 778666285893.dkr.ecr.eu-west-2.amazonaws.com
+6. List the images 
+ aws ecr list-images --repository-name spend-team-lambda
+
+e.g.
+
+robert@CIC001419:~/src/typescript/spend-team$ aws ecr list-images --repository-name spend-team-lambda
+{
+    "imageIds": [
+        {
+            "imageDigest": "sha256:5d67648be489e571b8c2e2af50b34206c09d80b77f9a9bb829de262e51217e29",
+            "imageTag": "latest"
+        }
+    ]
+}
+
+7. Update the function (pushing the image is not sufficient).
+aws lambda update-function-code --function-name spend-team-lambda  --image-uri 778666285893.dkr.ecr.eu-west-2.amazonaws.com/spend-team-lambda:latest
+
+8. Run the docker image server locally 
+ docker run --platform linux/amd64 -p 9000:8080 spend-team-lambda:latest
+9.  Use curl to throw data at the function.
+ curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d @al1.json
+
+
+e.g. ALSO can invoke the lambda this way - not sure how to supply it data yet?
+
+robert@CIC001419:~/src/typescript/spend-team$ aws lambda invoke --function-name spend-team-lambda new1.json
+{
+    "StatusCode": 200,
+    "ExecutedVersion": "$LATEST"
+}
+robert@CIC001419:~/src/typescript/spend-team$ cat new1.json
+{"statusCode":200,"body":"{\"message\":\"Hello World!\"}"}robert@CIC001419:~/src/typescript/spend-team$
+robert@CIC001419:~/src/typescript/spend-team$
+
+In the GUI when an elert is raised we see ... e.g. .....
+
+Service          | Linked account ID | Linked account name | Region    | Usage type               | Cost Explorer link
+AWS Security Hub | 778666285893      | RTNPlaygroundDevOps | eu-west-2 | EUW2-PaidComplianceCheck | View root cause

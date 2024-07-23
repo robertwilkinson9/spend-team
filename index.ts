@@ -1,6 +1,5 @@
 import { Context, APIGatewayProxyResult, APIGatewayEvent } from "aws-lambda";
 
-// Mock S3 client for local testing
 class MockS3Client {
   async send(command: any) {
     console.log(`Mock S3 operation: ${command.constructor.name}`);
@@ -59,6 +58,7 @@ export const handler = async (
     };
   } catch (error) {
     console.error("Error:", error);
+
     return {
       statusCode: 500,
       body: JSON.stringify({
