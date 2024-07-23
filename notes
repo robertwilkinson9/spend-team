@@ -1,0 +1,43 @@
+ aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 778666285893.dkr.ecr.eu-west-2.amazonaws.com
+ aws ecr create-repository --repository-name spend-team-lambda --region eu-west-2 --image-scanning-configuration scanOnPush=true --image-tag-mutability MUTABLE
+ aws ecr list-images --repository-name spend-team-lambda
+ curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{}'
+ docker build --platform linux/amd64 -t spend-team-lambda:latest .
+ docker run --platform linux/amd64 -p 9000:8080 spend-team-lambda:latest
+ docker tag spend-team-lambda:latest 778666285893.dkr.ecr.eu-west-2.amazonaws.com
+ docker push 778666285893.dkr.ecr.eu-west-2.amazonaws.com
+
+e.g.
+
+robert@CIC001419:~/src/typescript/spend-team$ aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 778666285893.dkr.ecr.eu-west-2.amazonaws.com
+WARNING! Your password will be stored unencrypted in /home/robert/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+Login Succeeded
+robert@CIC001419:~/src/typescript/spend-team$
+
+robert@CIC001419:~/src/typescript/spend-team$ aws ecr create-repository --repository-name spend-team-lambda --region eu-west-2 --image-scanning-configuration scanOnPush=true --image-tag-mutability MUTABLE
+{
+    "repository": {
+        "repositoryArn": "arn:aws:ecr:eu-west-2:778666285893:repository/spend-team-lambda",
+        "registryId": "778666285893",
+        "repositoryName": "spend-team-lambda",
+        "repositoryUri": "778666285893.dkr.ecr.eu-west-2.amazonaws.com/spend-team-lambda",
+        "createdAt": 1721726890.674,
+        "imageTagMutability": "MUTABLE",
+        "imageScanningConfiguration": {
+            "scanOnPush": true
+        },
+        "encryptionConfiguration": {
+            "encryptionType": "AES256"
+        }
+    }
+}
+robert@CIC001419:~/src/typescript/spend-team$
+
+robert@CIC001419:~/src/typescript/spend-team$ aws ecr list-images --repository-name spend-team-lambda
+{
+    "imageIds": []
+}
+robert@CIC001419:~/src/typescript/spend-team$
