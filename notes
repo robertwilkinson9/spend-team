@@ -34,10 +34,22 @@ robert@CIC001419:~/src/typescript/spend-team$ aws ecr create-repository --reposi
         }
     }
 }
-robert@CIC001419:~/src/typescript/spend-team$
 
 robert@CIC001419:~/src/typescript/spend-team$ aws ecr list-images --repository-name spend-team-lambda
 {
-    "imageIds": []
+    "imageIds": [
+        {
+            "imageDigest": "sha256:5d67648be489e571b8c2e2af50b34206c09d80b77f9a9bb829de262e51217e29",
+            "imageTag": "latest"
+        }
+    ]
 }
+
+robert@CIC001419:~/src/typescript/spend-team$ aws lambda invoke --function-name spend-team-lambda new1.json
+{
+    "StatusCode": 200,
+    "ExecutedVersion": "$LATEST"
+}
+robert@CIC001419:~/src/typescript/spend-team$ cat new1.json
+{"statusCode":200,"body":"{\"message\":\"Hello World!\"}"}robert@CIC001419:~/src/typescript/spend-team$
 robert@CIC001419:~/src/typescript/spend-team$
