@@ -1,12 +1,5 @@
+1. login to docker via:
  aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 778666285893.dkr.ecr.eu-west-2.amazonaws.com
- aws ecr create-repository --repository-name spend-team-lambda --region eu-west-2 --image-scanning-configuration scanOnPush=true --image-tag-mutability MUTABLE
- aws ecr list-images --repository-name spend-team-lambda
- curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{}'
- docker build --platform linux/amd64 -t spend-team-lambda:latest .
- docker run --platform linux/amd64 -p 9000:8080 spend-team-lambda:latest
- docker tag spend-team-lambda:latest 778666285893.dkr.ecr.eu-west-2.amazonaws.com
- docker push 778666285893.dkr.ecr.eu-west-2.amazonaws.com
-
 e.g.
 
 robert@CIC001419:~/src/typescript/spend-team$ aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 778666285893.dkr.ecr.eu-west-2.amazonaws.com
@@ -16,6 +9,13 @@ https://docs.docker.com/engine/reference/commandline/login/#credentials-store
 
 Login Succeeded
 robert@CIC001419:~/src/typescript/spend-team$
+
+You need to have up-to-date ENV variable from Playground!
+
+2. Create an ECR (Elastic Container Registry) entry for spend-team-lambda. Only need to do the registration once.
+ aws ecr create-repository --repository-name spend-team-lambda --region eu-west-2 --image-scanning-configuration scanOnPush=true --image-tag-mutability MUTABLE
+
+e.g.
 
 robert@CIC001419:~/src/typescript/spend-team$ aws ecr create-repository --repository-name spend-team-lambda --region eu-west-2 --image-scanning-configuration scanOnPush=true --image-tag-mutability MUTABLE
 {
@@ -35,6 +35,17 @@ robert@CIC001419:~/src/typescript/spend-team$ aws ecr create-repository --reposi
     }
 }
 
+3. Build the docker image (tagged spend-team-lambda:latest).
+ docker build --platform linux/amd64 -t spend-team-lambda:latest .
+4. Tag the latest image we built in 3 with the ECR name.
+ docker tag spend-team-lambda:latest 778666285893.dkr.ecr.eu-west-2.amazonaws.com
+5. Then push the docker image
+ docker push 778666285893.dkr.ecr.eu-west-2.amazonaws.com
+6. List the images 
+ aws ecr list-images --repository-name spend-team-lambda
+
+e.g.
+
 robert@CIC001419:~/src/typescript/spend-team$ aws ecr list-images --repository-name spend-team-lambda
 {
     "imageIds": [
@@ -44,6 +55,14 @@ robert@CIC001419:~/src/typescript/spend-team$ aws ecr list-images --repository-n
         }
     ]
 }
+
+6. Run the docker image server locally 
+ docker run --platform linux/amd64 -p 9000:8080 spend-team-lambda:latest
+7.  Use curl to throw data at the function.
+ curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d @al1.json
+
+
+e.g. ALSO can run the lambda this way - not sure how to supply it data yet?
 
 robert@CIC001419:~/src/typescript/spend-team$ aws lambda invoke --function-name spend-team-lambda new1.json
 {
