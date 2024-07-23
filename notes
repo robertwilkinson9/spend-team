@@ -56,9 +56,12 @@ robert@CIC001419:~/src/typescript/spend-team$ aws ecr list-images --repository-n
     ]
 }
 
-6. Run the docker image server locally 
+7. Update the function (pushing the image is not sufficient).
+aws lambda update-function-code --function-name spend-team-lambda  --image-uri 778666285893.dkr.ecr.eu-west-2.amazonaws.com/spend-team-lambda:latest
+
+8. Run the docker image server locally 
  docker run --platform linux/amd64 -p 9000:8080 spend-team-lambda:latest
-7.  Use curl to throw data at the function.
+9.  Use curl to throw data at the function.
  curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d @al1.json
 
 
