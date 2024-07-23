@@ -7,11 +7,11 @@
             "DimensionValue": "string",
             "RootCauses": [
                 {
-                    "Service": "string",
-                    "Region": "string",
-                    "LinkedAccount": "string",
-                    "UsageType": "string",
-                    "LinkedAccountName": "string"
+                    "Service": "Amazon Wotsit",
+                    "Region": "eu-west-2",
+                    "LinkedAccount": "778666285893",
+                    "UsageType": "EUW2-PaidComplianceCheck",
+                    "LinkedAccountName": "RTNPlaygroundDevOps"
                 }
             ],
             "AnomalyScore": {
@@ -19,11 +19,11 @@
                 "CurrentScore": 123.0
             },
             "Impact": {
-                "MaxImpact": 123.0,
-                "TotalImpact": 123.0,
-                "TotalActualSpend": 123.0,
-                "TotalExpectedSpend": 123.0,
-                "TotalImpactPercentage": 123.0
+                "MaxImpact": 0.06,
+                "TotalImpact": 0.06,
+                "TotalActualSpend": 0.13,
+                "TotalExpectedSpend": 0.07,
+                "TotalImpactPercentage": 85.71
             },
             "MonitorArn": "string",
             "Feedback": "PLANNED_ACTIVITY"
