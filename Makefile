@@ -1,3 +1,5 @@
+all:	update-function
+
 login:
 	aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 778666285893.dkr.ecr.eu-west-2.amazonaws.com
 build: login
