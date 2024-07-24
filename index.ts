@@ -1,4 +1,5 @@
 import { Context, APIGatewayProxyResult, APIGatewayEvent } from "aws-lambda";
+import * as env from 'env-var';
 
 class MockS3Client {
   async send(command: any) {
@@ -26,6 +27,17 @@ export const handler = async (
   });
 
   try {
+    // Read a PORT environment variable and ensure it's a positive integer.
+    // An EnvVarError will be thrown if the variable is not set, or if it
+    // is not a positive integer.
+    // const PORT: number = env.get('PORT').required().asIntPositive();
+
+    console.log("ENVIRONMENT START");
+//    console.dir(process.env);
+    console.log(`TEAM_SPEND_ALERT is ${process.env["TEAM_SPEND_ALERT"]}`);
+    console.log(`TEAM_SPEND_ACTION is ${process.env["TEAM_SPEND_ACTION"]}`);
+    console.log("ENVIRONMENT END");
+
     // Generate timestamped key
     const key = `lambda-run-${currentTimestamp}.json`;
 

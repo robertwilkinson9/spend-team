@@ -80,3 +80,9 @@ In the GUI when an elert is raised we see ... e.g. .....
 
 Service          | Linked account ID | Linked account name | Region    | Usage type               | Cost Explorer link
 AWS Security Hub | 778666285893      | RTNPlaygroundDevOps | eu-west-2 | EUW2-PaidComplianceCheck | View root cause
+
+Run the docker container with environmental variables set.
+docker run --env TEAM_SPEND_ALERT=10 --env TEAM_SPEND_ACTION=50 --platform linux/amd64 -p 9000:8080 spend-team-lambda:latest
+
+for updating the lambda function to run with a particular environment.
+aws lambda update-function-configuration --function-name spend-team-lambda --environment "Variables={TEAM_SPEND_ALERT=10, TEAM_SPEND_ACTION=50}"
