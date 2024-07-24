@@ -12,5 +12,7 @@ list-images:
 	aws ecr list-images --repository-name spend-team-lambda
 update-function: push
 	aws lambda update-function-code --function-name spend-team-lambda  --image-uri 778666285893.dkr.ecr.eu-west-2.amazonaws.com/spend-team-lambda:latest
+	sleep 180
+	aws lambda update-function-configuration --function-name spend-team-lambda --environment "Variables={TEAM_SPEND_ALERT=10, TEAM_SPEND_ACTION=50}"
 run: build
 	docker run --platform linux/amd64 -p 9000:8080 spend-team-lambda:latest

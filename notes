@@ -86,3 +86,6 @@ docker run --env TEAM_SPEND_ALERT=10 --env TEAM_SPEND_ACTION=50 --platform linux
 
 for updating the lambda function to run with a particular environment.
 aws lambda update-function-configuration --function-name spend-team-lambda --environment "Variables={TEAM_SPEND_ALERT=10, TEAM_SPEND_ACTION=50}"
+
+# the above command destroys the Variables={} so if we need the current version, use this before running the above
+aws lambda get-function-configuration — function-name my-function
