@@ -15,4 +15,4 @@ update-function: push
 update-function-configuration: update-function
 	aws lambda update-function-configuration --function-name spend-team-lambda --environment "Variables={TEAM_SPEND_ALERT=$${TEAM_SPEND_ALERT}, TEAM_SPEND_ACTION=$${TEAM_SPEND_ACTION}}"
 run: build
-	docker run --platform linux/amd64 -p 9000:8080 spend-team-lambda:latest
+	docker run --platform linux/amd64 -p 9000:8080 --env TEAM_SPEND_ALERT=$${TEAM_SPEND_ALERT} --env TEAM_SPEND_ACTION=$${TEAM_SPEND_ACTION} spend-team-lambda:latest
