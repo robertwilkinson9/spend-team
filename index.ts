@@ -27,26 +27,9 @@ export const handler = async (
   });
 
   try {
-    console.log("ENVIRONMENT START");
-    console.log(`TEAM_SPEND_ALERT is ${process.env["TEAM_SPEND_ALERT"]}`);
-    console.log(`TEAM_SPEND_ACTION is ${process.env["TEAM_SPEND_ACTION"]}`);
-    console.log("ENVIRONMENT END");
-
-    // const TEAM_SPEND_ALERT: number = env.get('TEAM_SPEND_ALERT').default(10).asIntPositive();
-    // const TEAM_SPEND_ACTION: number = env.get('TEAM_SPEND_ACTION').default(50).asIntPositive();
-
-    // Read TEAM_SPEND environment variables and ensure they are positive integers.
-    // An EnvVarError will be thrown if either variable is not set, or if it is not a positive integer.
-    //const TEAM_SPEND_ALERT: number = env.get('TEAM_SPEND_ALERT').required().asIntPositive();
-    //const TEAM_SPEND_ACTION: number = env.get('TEAM_SPEND_ACTION').required().asIntPositive();
+    // Read TEAM_SPEND environment variables and provide defaults if not supplied
     const TEAM_SPEND_ALERT: number = env.get('TEAM_SPEND_ALERT').default('10').asIntPositive();
     const TEAM_SPEND_ACTION: number = env.get('TEAM_SPEND_ACTION').default('50').asIntPositive();
-    console.log(`TEAM_SPEND_ALERT is `);
-    console.dir(TEAM_SPEND_ALERT);
-    console.log(`TEAM_SPEND_ACTION is `);
-    console.dir(TEAM_SPEND_ACTION);
-    console.log(`TEAM_SPEND_ALERT is ${TEAM_SPEND_ALERT}`);
-    console.log(`TEAM_SPEND_ACTION is ${TEAM_SPEND_ACTION}`);
 
     // Generate timestamped key
     const key = `lambda-run-${currentTimestamp}.json`;
@@ -55,6 +38,8 @@ export const handler = async (
     const content = {
       timestamp: currentTimestamp,
       message: "Lambda function executed",
+      alert: TEAM_SPEND_ALERT,
+      action: TEAM_SPEND_ACTION,
       event: event,
     };
 
@@ -75,6 +60,8 @@ export const handler = async (
         message: "Hello Haseb!",
         currentTimestamp: currentTimestamp,
         allInvocations: invocationTimestamps,
+        alert: TEAM_SPEND_ALERT,
+        action: TEAM_SPEND_ACTION,
         s3Object: `s3://${bucketName}/${key}`,
       }),
     };
