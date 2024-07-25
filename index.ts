@@ -27,16 +27,26 @@ export const handler = async (
   });
 
   try {
-    // Read a PORT environment variable and ensure it's a positive integer.
-    // An EnvVarError will be thrown if the variable is not set, or if it
-    // is not a positive integer.
-    // const PORT: number = env.get('PORT').required().asIntPositive();
-
     console.log("ENVIRONMENT START");
-//    console.dir(process.env);
     console.log(`TEAM_SPEND_ALERT is ${process.env["TEAM_SPEND_ALERT"]}`);
     console.log(`TEAM_SPEND_ACTION is ${process.env["TEAM_SPEND_ACTION"]}`);
     console.log("ENVIRONMENT END");
+
+    // const TEAM_SPEND_ALERT: number = env.get('TEAM_SPEND_ALERT').default(10).asIntPositive();
+    // const TEAM_SPEND_ACTION: number = env.get('TEAM_SPEND_ACTION').default(50).asIntPositive();
+
+    // Read TEAM_SPEND environment variables and ensure they are positive integers.
+    // An EnvVarError will be thrown if either variable is not set, or if it is not a positive integer.
+    //const TEAM_SPEND_ALERT: number = env.get('TEAM_SPEND_ALERT').required().asIntPositive();
+    //const TEAM_SPEND_ACTION: number = env.get('TEAM_SPEND_ACTION').required().asIntPositive();
+    const TEAM_SPEND_ALERT: number = env.get('TEAM_SPEND_ALERT').default('10').asIntPositive();
+    const TEAM_SPEND_ACTION: number = env.get('TEAM_SPEND_ACTION').default('50').asIntPositive();
+    console.log(`TEAM_SPEND_ALERT is `);
+    console.dir(TEAM_SPEND_ALERT);
+    console.log(`TEAM_SPEND_ACTION is `);
+    console.dir(TEAM_SPEND_ACTION);
+    console.log(`TEAM_SPEND_ALERT is ${TEAM_SPEND_ALERT}`);
+    console.log(`TEAM_SPEND_ACTION is ${TEAM_SPEND_ACTION}`);
 
     // Generate timestamped key
     const key = `lambda-run-${currentTimestamp}.json`;
