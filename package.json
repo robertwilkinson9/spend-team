@@ -19,6 +19,12 @@
   "homepage": "https://github.com/robertwilkinson9/spend-team#readme",
   "devDependencies": {
     "@types/aws-lambda": "^8.10.141",
+    "@types/node": "^20.14.12",
+    "env-var": "^7.5.0",
+    "env-vars": "^0.5.0",
     "esbuild": "^0.23.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cost-explorer": "^3.616.0"
   }
 }

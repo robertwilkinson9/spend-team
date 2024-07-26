@@ -1,4 +1,5 @@
 import { Context, APIGatewayProxyResult, APIGatewayEvent } from "aws-lambda";
+import * as env from 'env-var';
 
 class MockS3Client {
   async send(command: any) {
@@ -26,6 +27,10 @@ export const handler = async (
   });
 
   try {
+    // Read TEAM_SPEND environment variables and provide defaults if not supplied
+    const TEAM_SPEND_ALERT: number = env.get('TEAM_SPEND_ALERT').default('10').asIntPositive();
+    const TEAM_SPEND_ACTION: number = env.get('TEAM_SPEND_ACTION').default('50').asIntPositive();
+
     // Generate timestamped key
     const key = `lambda-run-${currentTimestamp}.json`;
 
@@ -33,6 +38,8 @@ export const handler = async (
     const content = {
       timestamp: currentTimestamp,
       message: "Lambda function executed",
+      alert: TEAM_SPEND_ALERT,
+      action: TEAM_SPEND_ACTION,
       event: event,
     };
 
@@ -53,6 +60,8 @@ export const handler = async (
         message: "Hello Haseb!",
         currentTimestamp: currentTimestamp,
         allInvocations: invocationTimestamps,
+        alert: TEAM_SPEND_ALERT,
+        action: TEAM_SPEND_ACTION,
         s3Object: `s3://${bucketName}/${key}`,
       }),
     };
