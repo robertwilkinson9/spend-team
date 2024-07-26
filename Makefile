@@ -23,7 +23,7 @@ update-function-configuration: update-function
 	aws lambda update-function-configuration --function-name spend-team-lambda --environment "Variables={TEAM_SPEND_ALERT=$${TEAM_SPEND_ALERT}, TEAM_SPEND_ACTION=$${TEAM_SPEND_ACTION}}"
 run: build
 ifeq (${TSA}, 1)
-		docker run --platform linux/amd64 -p 9000:8080 spend-team-lambda:latest
+		docker run --platform linux/amd64 -p 9000:8080 --env AWS_ACCESS_KEY_ID=$${AWS_ACCESS_KEY_ID} --env AWS_SECRET_ACCESS_KEY=$${AWS_SECRET_ACCESS_KEY} --env AWS_SESSION_TOKEN=$${AWS_SESSION_TOKEN} spend-team-lambda:latest
 else
-		docker run --platform linux/amd64 -p 9000:8080 --env TEAM_SPEND_ALERT=$${TEAM_SPEND_ALERT} --env TEAM_SPEND_ACTION=$${TEAM_SPEND_ACTION} spend-team-lambda:latest
+		docker run --platform linux/amd64 -p 9000:8080 --env AWS_ACCESS_KEY_ID=$${AWS_ACCESS_KEY_ID} --env AWS_SECRET_ACCESS_KEY=$${AWS_SECRET_ACCESS_KEY} --env AWS_SESSION_TOKEN=$${AWS_SESSION_TOKEN} --env TEAM_SPEND_ALERT=$${TEAM_SPEND_ALERT} --env TEAM_SPEND_ACTION=$${TEAM_SPEND_ACTION} spend-team-lambda:latest
 endif

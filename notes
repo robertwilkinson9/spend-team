@@ -89,7 +89,6 @@ aws lambda update-function-configuration --function-name spend-team-lambda --env
 
 # the above command destroys the Variables={} so if we need the current version, use this before running the above
 aws lambda get-function-configuration — function-name my-function
-and
 
 and
 
@@ -125,3 +124,45 @@ robert@CIC001419:~/src/typescript/spend-team$ aws ce get-anomaly-subscriptions
         }
     ]
 }
+robert@CIC001419:~/src/typescript/spend-team$ aws lambda get-function-configuration --function-name spend-team-lambda
+{
+    "FunctionName": "spend-team-lambda",
+    "FunctionArn": "arn:aws:lambda:eu-west-2:778666285893:function:spend-team-lambda",
+    "Role": "arn:aws:iam::778666285893:role/PlaygroundGenericRoleForServices",
+    "CodeSize": 0,
+    "Description": "",
+    "Timeout": 3,
+    "MemorySize": 128,
+    "LastModified": "2024-07-25T15:00:30.000+0000",
+    "CodeSha256": "a83479a3d179000d4c690c4e79d0bada53e4dbfdb3886ccefeec45a53fe1d367",
+    "Version": "$LATEST",
+    "Environment": {
+        "Variables": {
+            "TEAM_SPEND_ALERT": "5",
+            "TEAM_SPEND_ACTION": "75"
+        }
+    },
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "RevisionId": "08bac5ec-b41e-4a66-8b4d-73622c5489ee",
+    "State": "Active",
+    "LastUpdateStatus": "Successful",
+    "PackageType": "Image",
+    "ImageConfigResponse": {},
+    "Architectures": [
+        "x86_64"
+    ],
+    "EphemeralStorage": {
+        "Size": 512
+    },
+    "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+    },
+    "LoggingConfig": {
+        "LogFormat": "Text",
+        "LogGroup": "/aws/lambda/spend-team-lambda"
+    }
+}
+robert@CIC001419:~/src/typescript/spend-team$

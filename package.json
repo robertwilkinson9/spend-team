@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "esbuild index.ts --bundle --minify --sourcemap --platform=node --target=es2020 --outfile=dist/index.js",
+    "tsc": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -18,11 +19,15 @@
   },
   "homepage": "https://github.com/robertwilkinson9/spend-team#readme",
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.141",
+    "@aws-sdk/client-lambda": "^3.620.0",
+    "@aws-sdk/client-s3": "^3.620.0",
+    "@aws-sdk/s3-request-presigner": "^3.620.0",
+    "@types/aws-lambda": "^8.10.142",
     "@types/node": "^20.14.12",
     "env-var": "^7.5.0",
     "env-vars": "^0.5.0",
-    "esbuild": "^0.23.0"
+    "esbuild": "^0.23.0",
+    "typescript": "^5.5.4"
   },
   "dependencies": {
     "@aws-sdk/client-cost-explorer": "^3.616.0"
