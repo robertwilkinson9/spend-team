@@ -1,5 +1,5 @@
 import { Context, APIGatewayProxyResult, APIGatewayEvent } from "aws-lambda";
-import { LambdaClient, GetFunctionConfigurationCommand, UpdateFunctionConfigurationCommand } from "@aws-sdk/client-lambda";
+//import { LambdaClient, GetFunctionConfigurationCommand, UpdateFunctionConfigurationCommand } from "@aws-sdk/client-lambda";
 import * as env from 'env-var';
 import { CostExplorerClient, GetAnomalySubscriptionsCommand, UpdateAnomalySubscriptionCommand } from "@aws-sdk/client-cost-explorer";
 // see https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/cost-explorer/
@@ -14,9 +14,9 @@ class MockS3Client {
 const s3Client = new MockS3Client();
 const bucketName = "timebucketstamp";
 
-console.log(`AWS_ACCESS_KEY_ID is ${process.env["AWS_ACCESS_KEY_ID"]}`);
-console.log(`AWS_SECRET_ACCESS_KEY is ${process.env["AWS_SECRET_ACCESS_KEY"]}`);
-console.log(`AWS_SESSION_TOKEN is ${process.env["AWS_SESSION_TOKEN"]}`);
+//console.log(`AWS_ACCESS_KEY_ID is ${process.env["AWS_ACCESS_KEY_ID"]}`);
+//console.log(`AWS_SECRET_ACCESS_KEY is ${process.env["AWS_SECRET_ACCESS_KEY"]}`);
+//console.log(`AWS_SESSION_TOKEN is ${process.env["AWS_SESSION_TOKEN"]}`);
 
 const config = { region: "eu-west-2",
 	         credentials: {
@@ -27,7 +27,7 @@ const config = { region: "eu-west-2",
 };
 
 const cclient = new CostExplorerClient(config);
-const lclient = new LambdaClient(config);
+//const lclient = new LambdaClient(config);
 
 // Store timestamps of Lambda invocations
 let invocationTimestamps: string[] = [];
@@ -36,6 +36,22 @@ export const handler = async (
   event: APIGatewayEvent,
   context: Context
 ): Promise<APIGatewayProxyResult> => {
+
+  console.log("EVENT is ");
+  console.dir(event);
+
+  let parameter_alert = 0;
+  let parameter_action = 0;
+  if (event.parameters) {
+    if (event.parameters.alert) {
+      parameter_alert = event.parameters.alert;
+    }
+    if (event.parameters.action) {
+      parameter_action = event.parameters.action;
+    }
+  }
+  console.log(`parameter_alert is ${parameter_alert}, parameter_action is ${parameter_action}`);
+
   const currentTimestamp = new Date().toISOString();
   invocationTimestamps.push(currentTimestamp);
 
@@ -46,30 +62,30 @@ export const handler = async (
 
   try {
     // Read TEAM_SPEND environment variables and provide defaults if not supplied
-    const TEAM_SPEND_ALERT: number = env.get('TEAM_SPEND_ALERT').default('10').asIntPositive();
-    const TEAM_SPEND_ACTION: number = env.get('TEAM_SPEND_ACTION').default('50').asIntPositive();
+    const TEAM_SPEND_ALERT: number = parameter_alert || env.get('TEAM_SPEND_ALERT').default('10').asIntPositive();
+    const TEAM_SPEND_ACTION: number = parameter_action || env.get('TEAM_SPEND_ACTION').default('50').asIntPositive();
 
-    const linput = { // GetFunctionConfigurationRequest
-	FunctionName: "arn:aws:lambda:eu-west-2:778666285893:function:spend-team-lambda"
-    };
-    const lcommand = new GetFunctionConfigurationCommand(linput);
-    const lresponse = await lclient.send(lcommand);
-    const savedtsal: number = lresponse.Environment.Variables.TEAM_SPEND_ALERT;
-    const savedtsac: number = lresponse.Environment.Variables.TEAM_SPEND_ACTION;
+//    const linput = { // GetFunctionConfigurationRequest
+//	FunctionName: "arn:aws:lambda:eu-west-2:778666285893:function:spend-team-lambda"
+//    };
+//    const lcommand = new GetFunctionConfigurationCommand(linput);
+//    const lresponse = await lclient.send(lcommand);
+//    const savedtsal: number = lresponse.Environment.Variables.TEAM_SPEND_ALERT;
+//    const savedtsac: number = lresponse.Environment.Variables.TEAM_SPEND_ACTION;
 
     console.log(`ENV TEAM_SPEND_ALERT is ${TEAM_SPEND_ALERT} and ENV TEAM_SPEND_ACTION is ${TEAM_SPEND_ACTION}`);
-    console.log(`savedtsal is ${savedtsal} and savedtsac is ${savedtsac}`);
+//    console.log(`savedtsal is ${savedtsal} and savedtsac is ${savedtsac}`);
 
-    if ((TEAM_SPEND_ALERT != savedtsal) || (TEAM_SPEND_ACTION != savedtsac)) {
-      lresponse.Environment.Variables.TEAM_SPEND_ALERT = `${TEAM_SPEND_ALERT}`;
-      lresponse.Environment.Variables.TEAM_SPEND_ACTION = `${TEAM_SPEND_ACTION}`;
-      console.log("UPDATING FUNCION CONFIGURATION is ");
-      console.dir(lresponse);
+//    if ((TEAM_SPEND_ALERT != savedtsal) || (TEAM_SPEND_ACTION != savedtsac)) {
+//      lresponse.Environment.Variables.TEAM_SPEND_ALERT = `${TEAM_SPEND_ALERT}`;
+//      lresponse.Environment.Variables.TEAM_SPEND_ACTION = `${TEAM_SPEND_ACTION}`;
+//      console.log("UPDATING FUNCION CONFIGURATION is ");
+//      console.dir(lresponse);
 
-      const uclient = new LambdaClient(config);
-      const ucommand = new UpdateFunctionConfigurationCommand(lresponse);
-      const uresponse = await uclient.send(ucommand);
-    }
+//      const uclient = new LambdaClient(config);
+//      const ucommand = new UpdateFunctionConfigurationCommand(lresponse);
+//      const uresponse = await uclient.send(ucommand);
+//    }
 
     const cinput = { // GetAnomalySubscriptionsRequest
       MonitorArn: "arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34",
@@ -77,33 +93,38 @@ export const handler = async (
     };
     const gasccommand = new GetAnomalySubscriptionsCommand(cinput);
     const cresponse = await cclient.send(gasccommand);
-    console.log("Anomaly Subscription is ");
-    console.dir(cresponse);
-
     const SubscriptionArn = cresponse.AnomalySubscriptions[0].SubscriptionArn;
-    console.log(`SubscriptionArn is ${SubscriptionArn}`);
+    const ThresholdExpression = cresponse.AnomalySubscriptions[0].ThresholdExpression;
+    console.log("Original Anomaly Subscription ThresholdExpression is ");
+    console.dir(ThresholdExpression);
 
-    console.log("first cresponse.AnomalySubscriptions[0].ThresholdExpression is ");
-    console.dir(cresponse.AnomalySubscriptions[0].ThresholdExpression);
-    console.log("first cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions is ");
-    console.dir(cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions);
+//    console.log(`SubscriptionArn is ${SubscriptionArn}`);
+
+//    console.log("first cresponse.AnomalySubscriptions[0].ThresholdExpression is ");
+//    console.dir(cresponse.AnomalySubscriptions[0].ThresholdExpression);
+//    console.log("first cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions is ");
+//    console.dir(cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions);
 
     const asc_values = cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions.Values;
-    console.log(`asc values is ${asc_values}`);
+//    console.log(`asc values is ${asc_values}`);
 
-    cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions.Values = [ `${TEAM_SPEND_ALERT}` ];
-    console.log("second cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions is ");
-    console.dir(cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions);
+    if (asc_values[0] != TEAM_SPEND_ALERT) {
+      cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions.Values = [ `${TEAM_SPEND_ALERT}` ];
+//    console.log("second cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions is ");
+//    console.dir(cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions);
 
-    cinput.ThresholdExpression = cresponse.AnomalySubscriptions[0].ThresholdExpression;
-    cinput.SubscriptionArn = cresponse.AnomalySubscriptions[0].SubscriptionArn;
-    console.log(`new cinput is`);
-    console.dir(cinput);
+      cinput.ThresholdExpression = cresponse.AnomalySubscriptions[0].ThresholdExpression;
+      cinput.SubscriptionArn = cresponse.AnomalySubscriptions[0].SubscriptionArn;
+//    console.log(`new cinput is`);
+//    console.dir(cinput);
+      console.log("Updated Anomaly Subscription ThresholdExpression is ");
+      console.dir(cinput.ThresholdExpression);
 
-    const ccommand = new UpdateAnomalySubscriptionCommand(cinput);
-    const cresponse2 = await cclient.send(ccommand);
-    console.log("UPDATING Anomaly Subscription is ");
-    console.dir(cresponse2);
+      const ccommand = new UpdateAnomalySubscriptionCommand(cinput);
+      const cresponse2 = await cclient.send(ccommand);
+//   console.log("UPDATING Anomaly Subscription is ");
+//    console.dir(cresponse2);
+    }
 
     // Generate timestamped key
     const key = `lambda-run-${currentTimestamp}.json`;
