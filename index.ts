@@ -61,10 +61,6 @@ export const handler = async (
   });
 
   try {
-    // Read TEAM_SPEND environment variables and provide defaults if not supplied
-    const TEAM_SPEND_ALERT: number = parameter_alert || env.get('TEAM_SPEND_ALERT').default('10').asIntPositive();
-    const TEAM_SPEND_ACTION: number = parameter_action || env.get('TEAM_SPEND_ACTION').default('50').asIntPositive();
-
 //    const linput = { // GetFunctionConfigurationRequest
 //	FunctionName: "arn:aws:lambda:eu-west-2:778666285893:function:spend-team-lambda"
 //    };
@@ -73,7 +69,6 @@ export const handler = async (
 //    const savedtsal: number = lresponse.Environment.Variables.TEAM_SPEND_ALERT;
 //    const savedtsac: number = lresponse.Environment.Variables.TEAM_SPEND_ACTION;
 
-    console.log(`ENV TEAM_SPEND_ALERT is ${TEAM_SPEND_ALERT} and ENV TEAM_SPEND_ACTION is ${TEAM_SPEND_ACTION}`);
 //    console.log(`savedtsal is ${savedtsal} and savedtsac is ${savedtsac}`);
 
 //    if ((TEAM_SPEND_ALERT != savedtsal) || (TEAM_SPEND_ACTION != savedtsac)) {
@@ -107,8 +102,21 @@ export const handler = async (
 
     const asc_values = cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions.Values;
 //    console.log(`asc values is ${asc_values}`);
+    // Read TEAM_SPEND environment variables and provide defaults if not supplied
+    // so parameter alert over rides the env - but the default should be different to this .. presumably the current value?
+    // XXX should the server read the environment variables - default to current setting?
 
-    if (asc_values[0] != TEAM_SPEND_ALERT) {
+    const current_alert = asc_values[0] || 10;
+    //const TEAM_SPEND_ALERT: number = parameter_alert || env.get('TEAM_SPEND_ALERT').default(current_alert).asIntPositive();
+    //const TEAM_SPEND_ALERT: number = parameter_alert || env.get('TEAM_SPEND_ALERT').default('`${current_alert}`').asIntPositive();
+    let TEAM_SPEND_ALERT: number = parameter_alert || env.get('TEAM_SPEND_ALERT').default('0').asIntPositive();
+    if (TEAM_SPEND_ALERT == 0) {
+	    TEAM_SPEND_ALERT = current_alert;
+    }
+    const TEAM_SPEND_ACTION: number = parameter_action || env.get('TEAM_SPEND_ACTION').default('0').asIntPositive();
+    console.log(`ENV TEAM_SPEND_ALERT is ${TEAM_SPEND_ALERT} and ENV TEAM_SPEND_ACTION is ${TEAM_SPEND_ACTION}`);
+
+    if (current_alert != TEAM_SPEND_ALERT) {
       cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions.Values = [ `${TEAM_SPEND_ALERT}` ];
 //    console.log("second cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions is ");
 //    console.dir(cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions);
