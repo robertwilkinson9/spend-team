@@ -1,0 +1,6 @@
+{
+	"parameters" : {
+		"alert": 30,
+		"action": 80
+	}
+}
