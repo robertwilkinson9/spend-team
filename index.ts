@@ -1,5 +1,6 @@
 const ZERO = 0;
 const TEN = 10;
+const EIGHTY = 80;
 
 import { Context, APIGatewayProxyResult, APIGatewayEvent } from "aws-lambda";
 //import { LambdaClient, GetFunctionConfigurationCommand, UpdateFunctionConfigurationCommand } from "@aws-sdk/client-lambda";
@@ -64,10 +65,6 @@ type EventType = AnomaliesList | ParameterSetting;
 
 const s3Client = new MockS3Client();
 const bucketName = "timebucketstamp";
-
-//console.log(`AWS_ACCESS_KEY_ID is ${process.env["AWS_ACCESS_KEY_ID"]}`);
-//console.log(`AWS_SECRET_ACCESS_KEY is ${process.env["AWS_SECRET_ACCESS_KEY"]}`);
-//console.log(`AWS_SESSION_TOKEN is ${process.env["AWS_SESSION_TOKEN"]}`);
 
 const config = { region: "eu-west-2",
 	         credentials: {
@@ -159,13 +156,9 @@ export const handler = async (
     console.dir(ThresholdExpression);
 
     const asc_values = cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions.Values;
-    // parameter alert over rides the default
     const current_alert = asc_values[0] || TEN;
-    let TEAM_SPEND_ALERT: number = parameter_alert || ZERO;
-    if (TEAM_SPEND_ALERT == ZERO) {
-	    TEAM_SPEND_ALERT = Number(current_alert);
-    }
-    const TEAM_SPEND_ACTION: number = parameter_action || ZERO;
+    const TEAM_SPEND_ALERT: number = parameter_alert || Number(current_alert);
+    const TEAM_SPEND_ACTION: number = parameter_action || EIGHTY;
 
     if (current_alert != TEAM_SPEND_ALERT) {
       const cas0 = cresponse.AnomalySubscriptions[0];
