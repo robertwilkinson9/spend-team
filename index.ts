@@ -1,3 +1,6 @@
+const ZERO = 0;
+const TEN = 10;
+
 import { Context, APIGatewayProxyResult, APIGatewayEvent } from "aws-lambda";
 //import { LambdaClient, GetFunctionConfigurationCommand, UpdateFunctionConfigurationCommand } from "@aws-sdk/client-lambda";
 import * as env from 'env-var';
@@ -156,20 +159,13 @@ export const handler = async (
     console.dir(ThresholdExpression);
 
     const asc_values = cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions.Values;
-    // Read TEAM_SPEND environment variables and provide defaults if not supplied
-    // so parameter alert over rides the env - but the default should be different to this .. presumably the current value?
-    // XXX should the server read the environment variables - default to current setting?
-
-    const current_alert = asc_values[0] || 10;
-    //const TEAM_SPEND_ALERT: number = parameter_alert || env.get('TEAM_SPEND_ALERT').default(current_alert).asIntPositive();
-    //const TEAM_SPEND_ALERT: number = parameter_alert || env.get('TEAM_SPEND_ALERT').default('`${current_alert}`').asIntPositive();
-    let TEAM_SPEND_ALERT: number = parameter_alert || env.get('TEAM_SPEND_ALERT').default('0').asIntPositive();
-    if (TEAM_SPEND_ALERT == 0) {
-//	    TEAM_SPEND_ALERT = +current_alert;
+    // parameter alert over rides the default
+    const current_alert = asc_values[0] || TEN;
+    let TEAM_SPEND_ALERT: number = parameter_alert || ZERO;
+    if (TEAM_SPEND_ALERT == ZERO) {
 	    TEAM_SPEND_ALERT = Number(current_alert);
     }
-    const TEAM_SPEND_ACTION: number = parameter_action || env.get('TEAM_SPEND_ACTION').default('0').asIntPositive();
-    console.log(`ENV TEAM_SPEND_ALERT is ${TEAM_SPEND_ALERT} and ENV TEAM_SPEND_ACTION is ${TEAM_SPEND_ACTION}`);
+    const TEAM_SPEND_ACTION: number = parameter_action || ZERO;
 
     if (current_alert != TEAM_SPEND_ALERT) {
       const cas0 = cresponse.AnomalySubscriptions[0];
@@ -179,13 +175,9 @@ export const handler = async (
         ThresholdExpression: cas0.ThresholdExpression,
         SubscriptionArn: cas0.SubscriptionArn
       }
-      console.log("Updated Anomaly Subscription ThresholdExpression is ");
-      console.dir(cinput2.ThresholdExpression);
 
       const ccommand = new UpdateAnomalySubscriptionCommand(cinput2);
       const cresponse2 = await cclient.send(ccommand);
-      console.log("UPDATING Anomaly Subscription is ");
-      console.dir(cresponse2);
     }
 
     // Generate timestamped key
