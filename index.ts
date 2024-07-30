@@ -89,22 +89,22 @@ export const handler = async (
   console.log("EVENT is ");
   console.dir(event);
 
-  if (event.Anomalies) {
+  if (("Anomalies" in event) && (event.Anomalies)) {
     console.log(`HAVE ANOMALIES`);
     const RC_list = event.Anomalies.map((x) => x.RootCauses);
-    const Region_list = RC_list.map((x) => x[0].Region);
-    const UsageType_list = RC_list.map((x) => x[0].UsageType);
     console.log("RC_list");
     console.dir(RC_list);
-    console.log("Region_list");
-    console.dir(Region_list);
+    // const Region_list = RC_list.map((x) => x[0].Region);
+    // console.log("Region_list");
+    // console.dir(Region_list);
+    const UsageType_list = RC_list.map((x) => x[0].UsageType);
     console.log("UsageType_list");
     console.dir(UsageType_list);
   }
 
   let parameter_alert = 0;
   let parameter_action = 0;
-  if (event.parameters) {
+  if (("parameters" in event) && (event.parameters)) {
     if (event.parameters.alert) {
       parameter_alert = event.parameters.alert;
     }
@@ -155,15 +155,7 @@ export const handler = async (
     console.log("Original Anomaly Subscription ThresholdExpression is ");
     console.dir(ThresholdExpression);
 
-//    console.log(`SubscriptionArn is ${SubscriptionArn}`);
-
-//    console.log("first cresponse.AnomalySubscriptions[0].ThresholdExpression is ");
-//    console.dir(cresponse.AnomalySubscriptions[0].ThresholdExpression);
-//    console.log("first cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions is ");
-//    console.dir(cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions);
-
     const asc_values = cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions.Values;
-//    console.log(`asc values is ${asc_values}`);
     // Read TEAM_SPEND environment variables and provide defaults if not supplied
     // so parameter alert over rides the env - but the default should be different to this .. presumably the current value?
     // XXX should the server read the environment variables - default to current setting?
@@ -173,27 +165,27 @@ export const handler = async (
     //const TEAM_SPEND_ALERT: number = parameter_alert || env.get('TEAM_SPEND_ALERT').default('`${current_alert}`').asIntPositive();
     let TEAM_SPEND_ALERT: number = parameter_alert || env.get('TEAM_SPEND_ALERT').default('0').asIntPositive();
     if (TEAM_SPEND_ALERT == 0) {
-	    TEAM_SPEND_ALERT = current_alert;
+//	    TEAM_SPEND_ALERT = +current_alert;
+	    TEAM_SPEND_ALERT = Number(current_alert);
     }
     const TEAM_SPEND_ACTION: number = parameter_action || env.get('TEAM_SPEND_ACTION').default('0').asIntPositive();
     console.log(`ENV TEAM_SPEND_ALERT is ${TEAM_SPEND_ALERT} and ENV TEAM_SPEND_ACTION is ${TEAM_SPEND_ACTION}`);
 
     if (current_alert != TEAM_SPEND_ALERT) {
-      cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions.Values = [ `${TEAM_SPEND_ALERT}` ];
-//    console.log("second cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions is ");
-//    console.dir(cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions);
+      const cas0 = cresponse.AnomalySubscriptions[0];
 
-      cinput.ThresholdExpression = cresponse.AnomalySubscriptions[0].ThresholdExpression;
-      cinput.SubscriptionArn = cresponse.AnomalySubscriptions[0].SubscriptionArn;
-//    console.log(`new cinput is`);
-//    console.dir(cinput);
+      cas0.ThresholdExpression.Dimensions.Values = [ `${TEAM_SPEND_ALERT}` ];
+      const cinput2 = { 
+        ThresholdExpression: cas0.ThresholdExpression,
+        SubscriptionArn: cas0.SubscriptionArn
+      }
       console.log("Updated Anomaly Subscription ThresholdExpression is ");
-      console.dir(cinput.ThresholdExpression);
+      console.dir(cinput2.ThresholdExpression);
 
-      const ccommand = new UpdateAnomalySubscriptionCommand(cinput);
+      const ccommand = new UpdateAnomalySubscriptionCommand(cinput2);
       const cresponse2 = await cclient.send(ccommand);
-//   console.log("UPDATING Anomaly Subscription is ");
-//    console.dir(cresponse2);
+      console.log("UPDATING Anomaly Subscription is ");
+      console.dir(cresponse2);
     }
 
     // Generate timestamped key
