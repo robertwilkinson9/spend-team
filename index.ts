@@ -4,7 +4,6 @@ const EIGHTY = 80;
 
 import { Context, APIGatewayProxyResult, APIGatewayEvent } from "aws-lambda";
 //import { LambdaClient, GetFunctionConfigurationCommand, UpdateFunctionConfigurationCommand } from "@aws-sdk/client-lambda";
-import * as env from 'env-var';
 import { CostExplorerClient, GetAnomalySubscriptionsCommand, UpdateAnomalySubscriptionCommand } from "@aws-sdk/client-cost-explorer";
 // see https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/cost-explorer/
 
@@ -128,21 +127,11 @@ export const handler = async (
 //    };
 //    const lcommand = new GetFunctionConfigurationCommand(linput);
 //    const lresponse = await lclient.send(lcommand);
-//    const savedtsal: number = lresponse.Environment.Variables.TEAM_SPEND_ALERT;
-//    const savedtsac: number = lresponse.Environment.Variables.TEAM_SPEND_ACTION;
+//    console.dir(lresponse);
 
-//    console.log(`savedtsal is ${savedtsal} and savedtsac is ${savedtsac}`);
-
-//    if ((TEAM_SPEND_ALERT != savedtsal) || (TEAM_SPEND_ACTION != savedtsac)) {
-//      lresponse.Environment.Variables.TEAM_SPEND_ALERT = `${TEAM_SPEND_ALERT}`;
-//      lresponse.Environment.Variables.TEAM_SPEND_ACTION = `${TEAM_SPEND_ACTION}`;
-//      console.log("UPDATING FUNCION CONFIGURATION is ");
-//      console.dir(lresponse);
-
-//      const uclient = new LambdaClient(config);
-//      const ucommand = new UpdateFunctionConfigurationCommand(lresponse);
-//      const uresponse = await uclient.send(ucommand);
-//    }
+//    const uclient = new LambdaClient(config);
+//    const ucommand = new UpdateFunctionConfigurationCommand(lresponse);
+//    const uresponse = await uclient.send(ucommand);
 
     const cinput = { // GetAnomalySubscriptionsRequest
       MonitorArn: "arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34",
