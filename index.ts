@@ -11,6 +11,54 @@ class MockS3Client {
   }
 }
 
+export interface AnomaliesList {
+  Anomalies: Anomaly[]
+}
+
+export interface Anomaly {
+  AnomalyId: string
+  AnomalyStartDate: string
+  AnomalyEndDate: string
+  DimensionValue: string
+  RootCauses: RootCause[]
+  AnomalyScore: AnomalyScore
+  Impact: Impact
+  MonitorArn: string
+}
+
+export interface RootCause {
+  Service: string
+  Region?: string
+  LinkedAccount: string
+  UsageType?: string
+  LinkedAccountName: string
+}
+
+export interface AnomalyScore {
+  MaxScore: number
+  CurrentScore: number
+}
+
+export interface Impact {
+  MaxImpact: number
+  TotalImpact: number
+  TotalActualSpend: number
+  TotalExpectedSpend: number
+  TotalImpactPercentage?: number
+}
+
+export interface ParameterSetting{
+  parameters: Parameters
+}
+
+export interface Parameters {
+  alert: number
+  action: number
+}
+
+
+type EventType = AnomaliesList | ParameterSetting;
+
 const s3Client = new MockS3Client();
 const bucketName = "timebucketstamp";
 
@@ -32,13 +80,27 @@ const cclient = new CostExplorerClient(config);
 // Store timestamps of Lambda invocations
 let invocationTimestamps: string[] = [];
 
+//  event: APIGatewayEvent,
 export const handler = async (
-  event: APIGatewayEvent,
+  event: EventType,
   context: Context
 ): Promise<APIGatewayProxyResult> => {
 
   console.log("EVENT is ");
   console.dir(event);
+
+  if (event.Anomalies) {
+    console.log(`HAVE ANOMALIES`);
+    const RC_list = event.Anomalies.map((x) => x.RootCauses);
+    const Region_list = RC_list.map((x) => x[0].Region);
+    const UsageType_list = RC_list.map((x) => x[0].UsageType);
+    console.log("RC_list");
+    console.dir(RC_list);
+    console.log("Region_list");
+    console.dir(Region_list);
+    console.log("UsageType_list");
+    console.dir(UsageType_list);
+  }
 
   let parameter_alert = 0;
   let parameter_action = 0;
