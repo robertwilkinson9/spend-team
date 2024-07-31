@@ -226,3 +226,21 @@ aws ce get-anomaly-subscriptions  > two.subscriptions.json
         }
     ]
 }
+robert@CIC001419:~/src/typescript/spend-team$ aws ecr create-repository --repository-name team-spend-action
+{
+    "repository": {
+        "repositoryArn": "arn:aws:ecr:eu-west-2:778666285893:repository/team-spend-action",
+        "registryId": "778666285893",
+        "repositoryName": "team-spend-action",
+        "repositoryUri": "778666285893.dkr.ecr.eu-west-2.amazonaws.com/team-spend-action",
+        "createdAt": 1722425330.275,
+        "imageTagMutability": "MUTABLE",
+        "imageScanningConfiguration": {
+            "scanOnPush": false
+        },
+        "encryptionConfiguration": {
+            "encryptionType": "AES256"
+        }
+    }
+}
+robert@CIC001419:~/src/typescript/spend-team$

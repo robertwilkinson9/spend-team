@@ -63,7 +63,6 @@ export interface Parameters {
   action: number
 }
 
-
 type EventType = AnomaliesList | ParameterSetting;
 
 const s3Client = new MockS3Client();
