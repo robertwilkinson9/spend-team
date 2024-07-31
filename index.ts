@@ -1,11 +1,15 @@
-const ZERO = 0;
-const TEN = 10;
-const EIGHTY = 80;
-
 import { Context, APIGatewayProxyResult, APIGatewayEvent } from "aws-lambda";
 //import { LambdaClient, GetFunctionConfigurationCommand, UpdateFunctionConfigurationCommand } from "@aws-sdk/client-lambda";
 import { CostExplorerClient, GetAnomalySubscriptionsCommand, UpdateAnomalySubscriptionCommand } from "@aws-sdk/client-cost-explorer";
 // see https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/cost-explorer/
+
+const ZERO = 0;
+const TEN = 10;
+const TWENTY = 20;
+const EIGHTY = 80;
+
+const MonitorARN = "arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34";
+const MAXResults = TWENTY;
 
 class MockS3Client {
   async send(command: any) {
@@ -134,24 +138,23 @@ export const handler = async (
 //    const uresponse = await uclient.send(ucommand);
 
     const cinput = { // GetAnomalySubscriptionsRequest
-      MonitorArn: "arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34",
-      MaxResults: 20
+      MonitorArn: MonitorARN,
+      MaxResults: MAXResults
     };
     const gasccommand = new GetAnomalySubscriptionsCommand(cinput);
     const cresponse = await cclient.send(gasccommand);
-    const SubscriptionArn = cresponse.AnomalySubscriptions[0].SubscriptionArn;
-    const ThresholdExpression = cresponse.AnomalySubscriptions[0].ThresholdExpression;
+    const cas0 = cresponse.AnomalySubscriptions[0];
+    const SubscriptionArn = cas0.SubscriptionArn;
+    const ThresholdExpression = cas0.ThresholdExpression;
     console.log("Original Anomaly Subscription ThresholdExpression is ");
     console.dir(ThresholdExpression);
 
-    const asc_values = cresponse.AnomalySubscriptions[0].ThresholdExpression.Dimensions.Values;
+    const asc_values = cas0.ThresholdExpression.Dimensions.Values;
     const current_alert = asc_values[0] || TEN;
     const TEAM_SPEND_ALERT: number = parameter_alert || Number(current_alert);
     const TEAM_SPEND_ACTION: number = parameter_action || EIGHTY;
 
     if (current_alert != TEAM_SPEND_ALERT) {
-      const cas0 = cresponse.AnomalySubscriptions[0];
-
       cas0.ThresholdExpression.Dimensions.Values = [ `${TEAM_SPEND_ALERT}` ];
       const cinput2 = { 
         ThresholdExpression: cas0.ThresholdExpression,
