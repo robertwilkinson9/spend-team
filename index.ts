@@ -1,12 +1,14 @@
 import { Context, APIGatewayProxyResult, APIGatewayEvent } from "aws-lambda";
 //import { LambdaClient, GetFunctionConfigurationCommand, UpdateFunctionConfigurationCommand } from "@aws-sdk/client-lambda";
-import { CostExplorerClient, GetAnomalySubscriptionsCommand, UpdateAnomalySubscriptionCommand } from "@aws-sdk/client-cost-explorer";
+import { CostExplorerClient, GetAnomalySubscriptionsCommand, CreateAnomalySubscriptionCommand, UpdateAnomalySubscriptionCommand, DeleteAnomalySubscriptionCommand } from "@aws-sdk/client-cost-explorer";
 // see https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/cost-explorer/
 
 const ZERO = 0;
 const TEN = 10;
 const TWENTY = 20;
+const FIFTY = 50;
 const EIGHTY = 80;
+const HUNDRED = 100;
 
 const MonitorARN = "arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34";
 const MAXResults = TWENTY;
@@ -16,6 +18,33 @@ class MockS3Client {
     console.log(`Mock S3 operation: ${command.constructor.name}`);
     return { success: true };
   }
+}
+
+export interface AnomalySubscription {
+  SubscriptionArn: string
+  AccountId: string
+  MonitorArnList: string[]
+  Subscribers: Subscriber[]
+  Threshold: number
+  Frequency: string
+  SubscriptionName: string
+  ThresholdExpression: ThresholdExpression
+}
+
+export interface Subscriber {
+  Address: string
+  Type: string
+  Status: string
+}
+
+export interface ThresholdExpression {
+  Dimensions: Dimensions
+}
+
+export interface Dimensions {
+  Key: string
+  Values: string[]
+  MatchOptions: string[]
 }
 
 export interface AnomaliesList {
@@ -82,6 +111,67 @@ const cclient = new CostExplorerClient(config);
 // Store timestamps of Lambda invocations
 let invocationTimestamps: string[] = [];
 
+const delete_alert_subscriptions = async alert_arns => {
+      for (const arn of alert_arns) {
+         console.log(`DELETING SUBSCRIPTION ${arn}`);
+	 const input = {"SubscriptionArn": arn}
+         const command = new DeleteAnomalySubscriptionCommand(input);
+	 const response = await cclient.send(command);
+	 console.dir(response);
+      }
+};
+      
+const add_new_alert_subscription = async (old_subscription: AnomalySubscription, percentage: string, value:number) => {
+	const subscription_name = `TeamSpend${percentage}`;
+	old_subscription.SubscriptionName = subscription_name;
+	old_subscription.ThresholdExpression.Dimensions.Values.length = 0; // clear the current values
+	old_subscription.ThresholdExpression.Dimensions.Values.push(`${value}`);
+	console.dir(old_subscription);
+	console.dir(old_subscription.ThresholdExpression);
+//	const input = { old_subscription };
+//	const command = new CreateAnomalySubscriptionCommand(input);
+//	const response = await cclient.send(command);
+
+	const input = { // CreateAnomalySubscriptionRequest
+    	  AnomalySubscription: { // AnomalySubscription
+	  SubscriptionArn: 'arn:aws:ce::778666285893:anomalysubscription/d2b9a01a-41a4-4dd1-9ed3-085ee7bd564b',
+	    AccountId: '778666285893',
+	     MonitorArnList: [
+	       'arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34'
+	     ],
+	    Subscribers: [
+	     {
+	       Address: 'arn:aws:sns:eu-west-2:778666285893:SpendTeamAlert',
+	       Status: 'CONFIRMED',
+	       Type: 'SNS'
+	     }
+	    ],
+	    Frequency: 'IMMEDIATE',
+            SubscriptionName: subscription_name,
+            ThresholdExpression: {
+	      Dimensions: {
+	        Key: 'ANOMALY_TOTAL_IMPACT_ABSOLUTE',
+  	        MatchOptions: ["GREATER_THAN_OR_EQUAL"],
+    	        Values: [value]
+              }
+            }
+	  }
+        }
+
+	/*
+	},
+	Tags: {
+  	  Key: "Team",
+ 	  Values: [ "Spend"],
+	 */
+	const command = new CreateAnomalySubscriptionCommand(input);
+	const response = await cclient.send(command);
+
+	// { // CreateAnomalySubscriptionResponse
+        // SubscriptionArn: "STRING_VALUE", // required
+        // };
+};
+
 //  event: APIGatewayEvent,
 export const handler = async (
   event: EventType,
@@ -142,26 +232,70 @@ export const handler = async (
     };
     const gasccommand = new GetAnomalySubscriptionsCommand(cinput);
     const cresponse = await cclient.send(gasccommand);
-    const cas0 = cresponse.AnomalySubscriptions[0];
-    const SubscriptionArn = cas0.SubscriptionArn;
-    const ThresholdExpression = cas0.ThresholdExpression;
-    console.log("Original Anomaly Subscription ThresholdExpression is ");
-    console.dir(ThresholdExpression);
+    const cas = cresponse.AnomalySubscriptions;
 
-    const asc_values = cas0.ThresholdExpression.Dimensions.Values;
-    const current_alert = asc_values[0] || TEN;
-    const TEAM_SPEND_ALERT: number = parameter_alert || Number(current_alert);
-    const TEAM_SPEND_ACTION: number = parameter_action || EIGHTY;
+    let alert_arns: string[] = [];
+    let action_arn: string;
+    let current_action_te;
+    let current_action_dimensions;
+    let current_action_value = 0;
+    let current_alert;
 
-    if (current_alert != TEAM_SPEND_ALERT) {
-      cas0.ThresholdExpression.Dimensions.Values = [ `${TEAM_SPEND_ALERT}` ];
+    cas.forEach(subscription => {
+      console.dir(subscription);
+      const address = subscription.Subscribers[0].Address; // subscribers should be a list too? XXX
+      if ((address.endsWith("TeamSpendAction")) || address.endsWith("SpendTeamAction")) {
+        console.log("ACTION FOUND");
+	action_arn = subscription.SubscriptionArn;
+	current_action_te = subscription.ThresholdExpression;
+	current_action_dimensions = subscription.ThresholdExpression.Dimensions;
+	current_action_value = Number(subscription.ThresholdExpression.Dimensions.Values[0]); // no idea why Values is a list ATM XXX
+      } else if ((address.endsWith("TeamSpendAlert")) || address.endsWith("SpendTeamAlert")) {
+        console.log("ALERT FOUND");
+	alert_arns.push(subscription.SubscriptionArn);
+
+        current_alert = subscription;
+      } else {
+        console.log("XXX FOUND");
+      }
+    });
+
+    console.log(`ACtion ARN is ${action_arn}`);
+    console.log(`CURRENT ACtion VALUe is ${current_action_value}`);
+    console.log(`Alert ARNs are `);
+    console.dir(alert_arns);
+    console.log(`CURRENT Alert is `);
+    console.dir(current_alert);
+
+    const TEAM_SPEND_ACTION: number = parameter_action || FIFTY;
+    console.log(`current_action_value is ${current_action_value} TEAM_SPEND_ACTION is ${TEAM_SPEND_ACTION}`);
+    add_new_alert_subscription(current_alert, 23, 42);
+
+    if (current_action_value != TEAM_SPEND_ACTION) {
+      current_action_te.Dimensions.Values = [ `${TEAM_SPEND_ACTION}` ];
       const cinput2 = { 
-        ThresholdExpression: cas0.ThresholdExpression,
-        SubscriptionArn: cas0.SubscriptionArn
+        ThresholdExpression: current_action_te,
+        SubscriptionArn: action_arn
       }
 
       const ccommand = new UpdateAnomalySubscriptionCommand(cinput2);
       const cresponse2 = await cclient.send(ccommand);
+
+      // compute 20%, 40%, 60%, 80% of new TSA
+      const tenpercent = TEAM_SPEND_ACTION / 10;
+      const twentypercent = tenpercent + tenpercent;
+      const fortypercent  = twentypercent + twentypercent;
+      const sixtypercent  = fortypercent + twentypercent;
+      const eightypercent = sixtypercent + twentypercent;
+
+      // then delete all our current alerts
+      delete_alert_subscriptions(alert_arns);
+      
+      // and then create new alert subscriptions based upon the newly computed thresholds
+      add_new_alert_subscription(current_alert, '20', twentypercent);
+      add_new_alert_subscription(current_alert, '40', fortypercent);
+      add_new_alert_subscription(current_alert, '60', sixtypercent);
+      add_new_alert_subscription(current_alert, '80', eightypercent);
     }
 
     // Generate timestamped key
@@ -171,7 +305,6 @@ export const handler = async (
     const content = {
       timestamp: currentTimestamp,
       message: "Lambda function executed",
-      alert: TEAM_SPEND_ALERT,
       action: TEAM_SPEND_ACTION,
       event: event,
     };
@@ -193,7 +326,6 @@ export const handler = async (
         message: "Hello Haseb!",
         currentTimestamp: currentTimestamp,
         allInvocations: invocationTimestamps,
-        alert: TEAM_SPEND_ALERT,
         action: TEAM_SPEND_ACTION,
         s3Object: `s3://${bucketName}/${key}`,
       }),
