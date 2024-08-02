@@ -103,13 +103,13 @@ robert@CIC001419:~/src/typescript/spend-team$ aws ce get-anomaly-subscriptions
             ],
             "Subscribers": [
                 {
-                    "Address": "arn:aws:sns:eu-west-2:778666285893:SpendTeamAlert",
+                    "Address": "arn:aws:sns:eu-west-2:778666285893:TeamSpendAlert",
                     "Type": "SNS",
                     "Status": "CONFIRMED"
                 }
             ],
             "Frequency": "IMMEDIATE",
-            "SubscriptionName": "SpendTeam",
+            "SubscriptionName": "TeamSpend",
             "ThresholdExpression": {
                 "Dimensions": {
                     "Key": "ANOMALY_TOTAL_IMPACT_PERCENTAGE",
@@ -177,13 +177,13 @@ aws ce get-anomaly-subscriptions  > two.subscriptions.json
             ],
             "Subscribers": [
                 {
-                    "Address": "arn:aws:sns:eu-west-2:778666285893:SpendTeamAlert",
+                    "Address": "arn:aws:sns:eu-west-2:778666285893:TeamSpendAlert",
                     "Type": "SNS",
                     "Status": "CONFIRMED"
                 }
             ],
             "Frequency": "IMMEDIATE",
-            "SubscriptionName": "SpendTeam",
+            "SubscriptionName": "TeamSpend",
             "ThresholdExpression": {
                 "Dimensions": {
                     "Key": "ANOMALY_TOTAL_IMPACT_PERCENTAGE",
@@ -211,7 +211,7 @@ aws ce get-anomaly-subscriptions  > two.subscriptions.json
             ],
             "Threshold": 100.0,
             "Frequency": "IMMEDIATE",
-            "SubscriptionName": "SpendTeamAction",
+            "SubscriptionName": "TeamSpendAction",
             "ThresholdExpression": {
                 "Dimensions": {
                     "Key": "ANOMALY_TOTAL_IMPACT_ABSOLUTE",
