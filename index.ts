@@ -111,6 +111,7 @@ const cclient = new CostExplorerClient(config);
 // Store timestamps of Lambda invocations
 let invocationTimestamps: string[] = [];
 
+/*
 const delete_alert_subscriptions = async alert_arns => {
       for (const arn of alert_arns) {
          console.log(`DELETING SUBSCRIPTION ${arn}`);
@@ -141,7 +142,7 @@ const add_new_alert_subscription = async (old_subscription: AnomalySubscription,
 	     ],
 	    Subscribers: [
 	     {
-	       Address: 'arn:aws:sns:eu-west-2:778666285893:SpendTeamAlert',
+	       Address: 'arn:aws:sns:eu-west-2:778666285893:TeamSpendAlert',
 	       Status: 'CONFIRMED',
 	       Type: 'SNS'
 	     }
@@ -158,12 +159,10 @@ const add_new_alert_subscription = async (old_subscription: AnomalySubscription,
 	  }
         }
 
-	/*
-	},
-	Tags: {
-  	  Key: "Team",
- 	  Values: [ "Spend"],
-	 */
+//	},
+//	Tags: {
+//  	  Key: "Team",
+// 	  Values: [ "Spend"],
 	const command = new CreateAnomalySubscriptionCommand(input);
 	const response = await cclient.send(command);
 
@@ -171,6 +170,7 @@ const add_new_alert_subscription = async (old_subscription: AnomalySubscription,
         // SubscriptionArn: "STRING_VALUE", // required
         // };
 };
+*/
 
 //  event: APIGatewayEvent,
 export const handler = async (
@@ -235,26 +235,27 @@ export const handler = async (
     const cas = cresponse.AnomalySubscriptions;
 
     let alert_arns: string[] = [];
+    let alert_names: string[] = [];
+    let alert_tes = [];
     let action_arn: string;
     let current_action_te;
     let current_action_dimensions;
     let current_action_value = 0;
-    let current_alert;
 
     cas.forEach(subscription => {
       console.dir(subscription);
       const address = subscription.Subscribers[0].Address; // subscribers should be a list too? XXX
-      if ((address.endsWith("TeamSpendAction")) || address.endsWith("SpendTeamAction")) {
+      if (address.endsWith("TeamSpendAction")) {
         console.log("ACTION FOUND");
 	action_arn = subscription.SubscriptionArn;
 	current_action_te = subscription.ThresholdExpression;
 	current_action_dimensions = subscription.ThresholdExpression.Dimensions;
 	current_action_value = Number(subscription.ThresholdExpression.Dimensions.Values[0]); // no idea why Values is a list ATM XXX
-      } else if ((address.endsWith("TeamSpendAlert")) || address.endsWith("SpendTeamAlert")) {
+      } else if (address.endsWith("TeamSpendAlert")) {
         console.log("ALERT FOUND");
+	alert_names.push(subscription.SubscriptionName);
 	alert_arns.push(subscription.SubscriptionArn);
-
-        current_alert = subscription;
+	alert_tes.push(subscription.ThresholdExpression);
       } else {
         console.log("XXX FOUND");
       }
@@ -264,12 +265,9 @@ export const handler = async (
     console.log(`CURRENT ACtion VALUe is ${current_action_value}`);
     console.log(`Alert ARNs are `);
     console.dir(alert_arns);
-    console.log(`CURRENT Alert is `);
-    console.dir(current_alert);
 
     const TEAM_SPEND_ACTION: number = parameter_action || FIFTY;
     console.log(`current_action_value is ${current_action_value} TEAM_SPEND_ACTION is ${TEAM_SPEND_ACTION}`);
-    add_new_alert_subscription(current_alert, 23, 42);
 
     if (current_action_value != TEAM_SPEND_ACTION) {
       current_action_te.Dimensions.Values = [ `${TEAM_SPEND_ACTION}` ];
@@ -282,20 +280,21 @@ export const handler = async (
       const cresponse2 = await cclient.send(ccommand);
 
       // compute 20%, 40%, 60%, 80% of new TSA
-      const tenpercent = TEAM_SPEND_ACTION / 10;
-      const twentypercent = tenpercent + tenpercent;
-      const fortypercent  = twentypercent + twentypercent;
-      const sixtypercent  = fortypercent + twentypercent;
-      const eightypercent = sixtypercent + twentypercent;
+      const onepercent = TEAM_SPEND_ACTION / 100;
 
-      // then delete all our current alerts
-      delete_alert_subscriptions(alert_arns);
-      
-      // and then create new alert subscriptions based upon the newly computed thresholds
-      add_new_alert_subscription(current_alert, '20', twentypercent);
-      add_new_alert_subscription(current_alert, '40', fortypercent);
-      add_new_alert_subscription(current_alert, '60', sixtypercent);
-      add_new_alert_subscription(current_alert, '80', eightypercent);
+      for (let i = 0; i < alert_arns.length; i++) {
+         const arn = alert_arns[i];
+         const alert_name = alert_names[i];
+         const alert_value = Number(alert_name.substring(9)) * onepercent;
+         const alert_te = alert_tes[i];
+         alert_te.Dimensions.Values = [ `${alert_value}` ];
+
+         console.log(`UPDATING SUBSCRIPTION ${arn} iVALUE ${alert_value}`);
+	 const input = {SubscriptionArn: arn, ThresholdExpression: alert_te}
+         const command = new UpdateAnomalySubscriptionCommand(input);
+	 const response = await cclient.send(command);
+	 console.dir(response);
+      }
     }
 
     // Generate timestamped key
