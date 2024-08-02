@@ -111,67 +111,6 @@ const cclient = new CostExplorerClient(config);
 // Store timestamps of Lambda invocations
 let invocationTimestamps: string[] = [];
 
-/*
-const delete_alert_subscriptions = async alert_arns => {
-      for (const arn of alert_arns) {
-         console.log(`DELETING SUBSCRIPTION ${arn}`);
-	 const input = {"SubscriptionArn": arn}
-         const command = new DeleteAnomalySubscriptionCommand(input);
-	 const response = await cclient.send(command);
-	 console.dir(response);
-      }
-};
-      
-const add_new_alert_subscription = async (old_subscription: AnomalySubscription, percentage: string, value:number) => {
-	const subscription_name = `TeamSpend${percentage}`;
-	old_subscription.SubscriptionName = subscription_name;
-	old_subscription.ThresholdExpression.Dimensions.Values.length = 0; // clear the current values
-	old_subscription.ThresholdExpression.Dimensions.Values.push(`${value}`);
-	console.dir(old_subscription);
-	console.dir(old_subscription.ThresholdExpression);
-//	const input = { old_subscription };
-//	const command = new CreateAnomalySubscriptionCommand(input);
-//	const response = await cclient.send(command);
-
-	const input = { // CreateAnomalySubscriptionRequest
-    	  AnomalySubscription: { // AnomalySubscription
-	  SubscriptionArn: 'arn:aws:ce::778666285893:anomalysubscription/d2b9a01a-41a4-4dd1-9ed3-085ee7bd564b',
-	    AccountId: '778666285893',
-	     MonitorArnList: [
-	       'arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34'
-	     ],
-	    Subscribers: [
-	     {
-	       Address: 'arn:aws:sns:eu-west-2:778666285893:TeamSpendAlert',
-	       Status: 'CONFIRMED',
-	       Type: 'SNS'
-	     }
-	    ],
-	    Frequency: 'IMMEDIATE',
-            SubscriptionName: subscription_name,
-            ThresholdExpression: {
-	      Dimensions: {
-	        Key: 'ANOMALY_TOTAL_IMPACT_ABSOLUTE',
-  	        MatchOptions: ["GREATER_THAN_OR_EQUAL"],
-    	        Values: [value]
-              }
-            }
-	  }
-        }
-
-//	},
-//	Tags: {
-//  	  Key: "Team",
-// 	  Values: [ "Spend"],
-	const command = new CreateAnomalySubscriptionCommand(input);
-	const response = await cclient.send(command);
-
-	// { // CreateAnomalySubscriptionResponse
-        // SubscriptionArn: "STRING_VALUE", // required
-        // };
-};
-*/
-
 //  event: APIGatewayEvent,
 export const handler = async (
   event: EventType,
@@ -279,7 +218,7 @@ export const handler = async (
       const ccommand = new UpdateAnomalySubscriptionCommand(cinput2);
       const cresponse2 = await cclient.send(ccommand);
 
-      // compute 20%, 40%, 60%, 80% of new TSA
+      // now compute 20%, 40%, 60%, 80% of new TeamSpendAction and update alerts
       const onepercent = TEAM_SPEND_ACTION / 100;
 
       for (let i = 0; i < alert_arns.length; i++) {
