@@ -1,12 +1,17 @@
 import { Context, APIGatewayProxyResult, APIGatewayEvent } from "aws-lambda";
 //import { LambdaClient, GetFunctionConfigurationCommand, UpdateFunctionConfigurationCommand } from "@aws-sdk/client-lambda";
-import { CostExplorerClient, GetAnomalySubscriptionsCommand, UpdateAnomalySubscriptionCommand } from "@aws-sdk/client-cost-explorer";
+import { CostExplorerClient, GetAnomalySubscriptionsCommand, CreateAnomalySubscriptionCommand, UpdateAnomalySubscriptionCommand, DeleteAnomalySubscriptionCommand } from "@aws-sdk/client-cost-explorer";
 // see https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/cost-explorer/
+import { OrganizationsClient, CloseAccountCommand } from "@aws-sdk/client-organizations"; // ES Modules import
 
 const ZERO = 0;
 const TEN = 10;
 const TWENTY = 20;
+const FIFTY = 50;
 const EIGHTY = 80;
+const HUNDRED = 100;
+
+const TEAMSPENDLEN = 9; // length of TeamSpend string
 
 const MonitorARN = "arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34";
 const MAXResults = TWENTY;
@@ -16,6 +21,33 @@ class MockS3Client {
     console.log(`Mock S3 operation: ${command.constructor.name}`);
     return { success: true };
   }
+}
+
+export interface AnomalySubscription {
+  SubscriptionArn: string
+  AccountId: string
+  MonitorArnList: string[]
+  Subscribers: Subscriber[]
+  Threshold: number
+  Frequency: string
+  SubscriptionName: string
+  ThresholdExpression: ThresholdExpression
+}
+
+export interface Subscriber {
+  Address: string
+  Type: string
+  Status: string
+}
+
+export interface ThresholdExpression {
+  Dimensions: Dimensions
+}
+
+export interface Dimensions {
+  Key: string
+  Values: string[]
+  MatchOptions: string[]
 }
 
 export interface AnomaliesList {
@@ -78,6 +110,7 @@ const config = { region: "eu-west-2",
 
 const cclient = new CostExplorerClient(config);
 //const lclient = new LambdaClient(config);
+const oclient = new OrganizationsClient(config);
 
 // Store timestamps of Lambda invocations
 let invocationTimestamps: string[] = [];
@@ -91,31 +124,23 @@ export const handler = async (
   console.log("EVENT is ");
   console.dir(event);
 
+  let action_set = false;
+  let TEAM_SPEND_ACTION;
+
+  let ARClist;
   if (("Anomalies" in event) && (event.Anomalies)) {
     console.log(`HAVE ANOMALIES`);
-    const RC_list = event.Anomalies.map((x) => x.RootCauses);
-    console.log("RC_list");
-    console.dir(RC_list);
-    // const Region_list = RC_list.map((x) => x[0].Region);
-    // console.log("Region_list");
-    // console.dir(Region_list);
-    const UsageType_list = RC_list.map((x) => x[0].UsageType);
-    console.log("UsageType_list");
-    console.dir(UsageType_list);
+    ARClist = event.Anomalies.map((x) => x.RootCauses);
+    console.log("ARClist");
+    console.dir(ARClist);
+    console.log(`ARClist length is ${ARClist.length}`);
   }
-
-  let parameter_alert = 0;
-  let parameter_action = 0;
-  if (("parameters" in event) && (event.parameters)) {
-    if (event.parameters.alert) {
-      parameter_alert = event.parameters.alert;
-    }
+  else if (("parameters" in event) && (event.parameters)) {
     if (event.parameters.action) {
-      parameter_action = event.parameters.action;
+      TEAM_SPEND_ACTION = Number(event.parameters.action);
+      action_set = true;
     }
   }
-  console.log(`parameter_alert is ${parameter_alert}, parameter_action is ${parameter_action}`);
-
   const currentTimestamp = new Date().toISOString();
   invocationTimestamps.push(currentTimestamp);
 
@@ -136,32 +161,76 @@ export const handler = async (
 //    const ucommand = new UpdateFunctionConfigurationCommand(lresponse);
 //    const uresponse = await uclient.send(ucommand);
 
-    const cinput = { // GetAnomalySubscriptionsRequest
-      MonitorArn: MonitorARN,
-      MaxResults: MAXResults
-    };
-    const gasccommand = new GetAnomalySubscriptionsCommand(cinput);
-    const cresponse = await cclient.send(gasccommand);
-    const cas0 = cresponse.AnomalySubscriptions[0];
-    const SubscriptionArn = cas0.SubscriptionArn;
-    const ThresholdExpression = cas0.ThresholdExpression;
-    console.log("Original Anomaly Subscription ThresholdExpression is ");
-    console.dir(ThresholdExpression);
+    if (action_set) {
+      let alert_details = [];
+      let action_arn: string;
+      let current_action_te;
 
-    const asc_values = cas0.ThresholdExpression.Dimensions.Values;
-    const current_alert = asc_values[0] || TEN;
-    const TEAM_SPEND_ALERT: number = parameter_alert || Number(current_alert);
-    const TEAM_SPEND_ACTION: number = parameter_action || EIGHTY;
+      const cinput = { // GetAnomalySubscriptionsRequest
+        MonitorArn: MonitorARN,
+        MaxResults: MAXResults
+      };
+      const gasccommand = new GetAnomalySubscriptionsCommand(cinput);
+      const cresponse = await cclient.send(gasccommand);
 
-    if (current_alert != TEAM_SPEND_ALERT) {
-      cas0.ThresholdExpression.Dimensions.Values = [ `${TEAM_SPEND_ALERT}` ];
+      for (const subscription of cresponse.AnomalySubscriptions) {
+        const address = subscription.Subscribers[0].Address; // subscribers should be a list too? XXX
+        if (address.endsWith("TeamSpendAction")) {
+          console.log("ACTION FOUND");
+          action_arn = subscription.SubscriptionArn;
+          current_action_te = subscription.ThresholdExpression;
+        } else if (address.endsWith("TeamSpendAlert")) {
+          console.log(`ALERT FOUND -> ${subscription.SubscriptionName}`);
+          const sub_details = {name: subscription.SubscriptionName, arn: subscription.SubscriptionArn, te: subscription.ThresholdExpression};
+          alert_details.push(sub_details);
+        } else {
+          console.log("XXX FOUND");
+        }
+      }
+
+      current_action_te.Dimensions.Values = [ `${TEAM_SPEND_ACTION}` ];
       const cinput2 = { 
-        ThresholdExpression: cas0.ThresholdExpression,
-        SubscriptionArn: cas0.SubscriptionArn
+        ThresholdExpression: current_action_te,
+        SubscriptionArn: action_arn
       }
 
       const ccommand = new UpdateAnomalySubscriptionCommand(cinput2);
       const cresponse2 = await cclient.send(ccommand);
+
+      // now compute 20%, 40%, 60%, 80% of new TeamSpendAction and update alerts
+      const onepercent = TEAM_SPEND_ACTION / 100;
+
+      for (const detail of alert_details) {
+        const arn = detail.arn;
+        const value = Number(detail.name.substring(TEAMSPENDLEN)) * onepercent;
+        const te = detail.te;
+        te.Dimensions.Values = [ `${value}` ];
+
+        const input = {SubscriptionArn: arn, ThresholdExpression: te}
+        const command = new UpdateAnomalySubscriptionCommand(input);
+        const response = await cclient.send(command);
+      }
+    } else {
+      // action is not set so here we add code to suspend account IDs
+      if (ARClist.length) {
+        let closed_accounts: Set<string> = new Set;
+        for (const RC_list of ARClist) {
+          for (const root_cause of RC_list) {
+            const ac_id_to_close = root_cause.LinkedAccount;
+            if (!closed_accounts.has(ac_id_to_close)) {
+              console.log(`Would close Account ${ac_id_to_close}`);
+/*
+              const input = { // CloseAccountRequest
+                AccountId: ac_id_to_close
+              };
+              const command = new CloseAccountCommand(input);
+              const response = await client.send(command);
+*/
+              closed_accounts.add(ac_id_to_close);
+            }
+          }
+        }
+      }
     }
 
     // Generate timestamped key
@@ -171,7 +240,6 @@ export const handler = async (
     const content = {
       timestamp: currentTimestamp,
       message: "Lambda function executed",
-      alert: TEAM_SPEND_ALERT,
       action: TEAM_SPEND_ACTION,
       event: event,
     };
@@ -193,7 +261,6 @@ export const handler = async (
         message: "Hello Haseb!",
         currentTimestamp: currentTimestamp,
         allInvocations: invocationTimestamps,
-        alert: TEAM_SPEND_ALERT,
         action: TEAM_SPEND_ACTION,
         s3Object: `s3://${bucketName}/${key}`,
       }),
