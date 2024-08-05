@@ -15,8 +15,6 @@ const TEAMSPENDLEN = 9; // length of TeamSpend string
 const MonitorARN = "arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34";
 const MAXResults = TWENTY;
 
-const DEFAULT_SPEND_LIMIT = FIFTY;
-
 class MockS3Client {
   async send(command: any) {
     console.log(`Mock S3 operation: ${command.constructor.name}`);
@@ -124,6 +122,8 @@ export const handler = async (
   console.log("EVENT is ");
   console.dir(event);
 
+  let action_set = false;
+  let TEAM_SPEND_ACTION;
   if (("Anomalies" in event) && (event.Anomalies)) {
     console.log(`HAVE ANOMALIES`);
     const RC_list = event.Anomalies.map((x) => x.RootCauses);
@@ -133,18 +133,12 @@ export const handler = async (
     console.log("UsageType_list");
     console.dir(UsageType_list);
   }
-
-  let parameter_alert = 0;
-  let parameter_action = 0;
-  if (("parameters" in event) && (event.parameters)) {
-    if (event.parameters.alert) {
-      parameter_alert = event.parameters.alert;
-    }
+  else if (("parameters" in event) && (event.parameters)) {
     if (event.parameters.action) {
-      parameter_action = event.parameters.action;
+      TEAM_SPEND_ACTION = Number(event.parameters.action);
+      action_set = true;
     }
   }
-  console.log(`parameter_alert is ${parameter_alert}, parameter_action is ${parameter_action}`);
 
   const currentTimestamp = new Date().toISOString();
   invocationTimestamps.push(currentTimestamp);
@@ -166,37 +160,33 @@ export const handler = async (
 //    const ucommand = new UpdateFunctionConfigurationCommand(lresponse);
 //    const uresponse = await uclient.send(ucommand);
 
-    const cinput = { // GetAnomalySubscriptionsRequest
-      MonitorArn: MonitorARN,
-      MaxResults: MAXResults
-    };
-    const gasccommand = new GetAnomalySubscriptionsCommand(cinput);
-    const cresponse = await cclient.send(gasccommand);
+    if (action_set) {
+      let alert_details = [];
+      let action_arn: string;
+      let current_action_te;
 
-    let alert_details = [];
-    let action_arn: string;
-    let current_action_te;
-    let current_action_value = 0;
+      const cinput = { // GetAnomalySubscriptionsRequest
+        MonitorArn: MonitorARN,
+        MaxResults: MAXResults
+      };
+      const gasccommand = new GetAnomalySubscriptionsCommand(cinput);
+      const cresponse = await cclient.send(gasccommand);
 
-    for (const subscription of cresponse.AnomalySubscriptions) {
-      const address = subscription.Subscribers[0].Address; // subscribers should be a list too? XXX
-      if (address.endsWith("TeamSpendAction")) {
-        console.log("ACTION FOUND");
-	action_arn = subscription.SubscriptionArn;
-	current_action_te = subscription.ThresholdExpression;
-	current_action_value = Number(subscription.ThresholdExpression.Dimensions.Values[0]); // no idea why Values is a list ATM XXX
-      } else if (address.endsWith("TeamSpendAlert")) {
-        console.log(`ALERT FOUND -> ${subscription.SubscriptionName}`);
-        const sub_details = {name: subscription.SubscriptionName, arn: subscription.SubscriptionArn, te: subscription.ThresholdExpression};
-	alert_details.push(sub_details);
-      } else {
-        console.log("XXX FOUND");
+      for (const subscription of cresponse.AnomalySubscriptions) {
+        const address = subscription.Subscribers[0].Address; // subscribers should be a list too? XXX
+        if (address.endsWith("TeamSpendAction")) {
+          console.log("ACTION FOUND");
+          action_arn = subscription.SubscriptionArn;
+          current_action_te = subscription.ThresholdExpression;
+        } else if (address.endsWith("TeamSpendAlert")) {
+          console.log(`ALERT FOUND -> ${subscription.SubscriptionName}`);
+          const sub_details = {name: subscription.SubscriptionName, arn: subscription.SubscriptionArn, te: subscription.ThresholdExpression};
+          alert_details.push(sub_details);
+        } else {
+          console.log("XXX FOUND");
+        }
       }
-    }
 
-    const TEAM_SPEND_ACTION: number = parameter_action || DEFAULT_SPEND_LIMIT;
-
-    if (current_action_value != TEAM_SPEND_ACTION) {
       current_action_te.Dimensions.Values = [ `${TEAM_SPEND_ACTION}` ];
       const cinput2 = { 
         ThresholdExpression: current_action_te,
@@ -219,6 +209,9 @@ export const handler = async (
         const command = new UpdateAnomalySubscriptionCommand(input);
         const response = await cclient.send(command);
       }
+    } else {
+      // action is not set - so we are processing the anomaly list .. :-)
+      // here we add code to suspend account ID - or something?
     }
 
     // Generate timestamped key
