@@ -2,6 +2,7 @@ import { Context, APIGatewayProxyResult, APIGatewayEvent } from "aws-lambda";
 //import { LambdaClient, GetFunctionConfigurationCommand, UpdateFunctionConfigurationCommand } from "@aws-sdk/client-lambda";
 import { CostExplorerClient, GetAnomalySubscriptionsCommand, CreateAnomalySubscriptionCommand, UpdateAnomalySubscriptionCommand, DeleteAnomalySubscriptionCommand } from "@aws-sdk/client-cost-explorer";
 // see https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/cost-explorer/
+import { OrganizationsClient, CloseAccountCommand } from "@aws-sdk/client-organizations"; // ES Modules import
 
 const ZERO = 0;
 const TEN = 10;
@@ -109,6 +110,7 @@ const config = { region: "eu-west-2",
 
 const cclient = new CostExplorerClient(config);
 //const lclient = new LambdaClient(config);
+const oclient = new OrganizationsClient(config);
 
 // Store timestamps of Lambda invocations
 let invocationTimestamps: string[] = [];
@@ -124,14 +126,14 @@ export const handler = async (
 
   let action_set = false;
   let TEAM_SPEND_ACTION;
+
+  let ARClist;
   if (("Anomalies" in event) && (event.Anomalies)) {
     console.log(`HAVE ANOMALIES`);
-    const RC_list = event.Anomalies.map((x) => x.RootCauses);
-    console.log("RC_list");
-    console.dir(RC_list);
-    const UsageType_list = RC_list.map((x) => x[0].UsageType);
-    console.log("UsageType_list");
-    console.dir(UsageType_list);
+    ARClist = event.Anomalies.map((x) => x.RootCauses);
+    console.log("ARClist");
+    console.dir(ARClist);
+    console.log(`ARClist length is ${ARClist.length}`);
   }
   else if (("parameters" in event) && (event.parameters)) {
     if (event.parameters.action) {
@@ -139,7 +141,6 @@ export const handler = async (
       action_set = true;
     }
   }
-
   const currentTimestamp = new Date().toISOString();
   invocationTimestamps.push(currentTimestamp);
 
@@ -210,8 +211,26 @@ export const handler = async (
         const response = await cclient.send(command);
       }
     } else {
-      // action is not set - so we are processing the anomaly list .. :-)
-      // here we add code to suspend account ID - or something?
+      // action is not set so here we add code to suspend account IDs
+      if (ARClist.length) {
+        let closed_accounts: Set<string> = new Set;
+        for (const RC_list of ARClist) {
+          for (const root_cause of RC_list) {
+            const ac_id_to_close = root_cause.LinkedAccount;
+            if (!closed_accounts.has(ac_id_to_close)) {
+              console.log(`Would close Account ${ac_id_to_close}`);
+/*
+              const input = { // CloseAccountRequest
+                AccountId: ac_id_to_close
+              };
+              const command = new CloseAccountCommand(input);
+              const response = await client.send(command);
+*/
+              closed_accounts.add(ac_id_to_close);
+            }
+          }
+        }
+      }
     }
 
     // Generate timestamped key
