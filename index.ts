@@ -1,8 +1,18 @@
 import { Context, APIGatewayProxyResult, APIGatewayEvent } from "aws-lambda";
 //import { LambdaClient, GetFunctionConfigurationCommand, UpdateFunctionConfigurationCommand } from "@aws-sdk/client-lambda";
-import { CostExplorerClient, GetAnomalySubscriptionsCommand, CreateAnomalySubscriptionCommand, UpdateAnomalySubscriptionCommand, DeleteAnomalySubscriptionCommand } from "@aws-sdk/client-cost-explorer";
+import {
+  CostExplorerClient,
+  GetAnomalySubscriptionsCommand,
+  CreateAnomalySubscriptionCommand,
+  UpdateAnomalySubscriptionCommand,
+  DeleteAnomalySubscriptionCommand,
+} from "@aws-sdk/client-cost-explorer";
 // see https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/cost-explorer/
-import { OrganizationsClient, CloseAccountCommand } from "@aws-sdk/client-organizations"; // ES Modules import
+import {
+  OrganizationsClient,
+  CloseAccountCommand,
+} from "@aws-sdk/client-organizations"; // ES Modules import
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const ZERO = 0;
 const TEN = 10;
@@ -13,99 +23,94 @@ const HUNDRED = 100;
 
 const TEAMSPENDLEN = 9; // length of TeamSpend string
 
-const MonitorARN = "arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34";
+const MonitorARN =
+  "arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34";
 const MAXResults = TWENTY;
 
-class MockS3Client {
-  async send(command: any) {
-    console.log(`Mock S3 operation: ${command.constructor.name}`);
-    return { success: true };
-  }
-}
-
 export interface AnomalySubscription {
-  SubscriptionArn: string
-  AccountId: string
-  MonitorArnList: string[]
-  Subscribers: Subscriber[]
-  Threshold: number
-  Frequency: string
-  SubscriptionName: string
-  ThresholdExpression: ThresholdExpression
+  SubscriptionArn: string;
+  AccountId: string;
+  MonitorArnList: string[];
+  Subscribers: Subscriber[];
+  Threshold: number;
+  Frequency: string;
+  SubscriptionName: string;
+  ThresholdExpression: ThresholdExpression;
 }
 
 export interface Subscriber {
-  Address: string
-  Type: string
-  Status: string
+  Address: string;
+  Type: string;
+  Status: string;
 }
 
 export interface ThresholdExpression {
-  Dimensions: Dimensions
+  Dimensions: Dimensions;
 }
 
 export interface Dimensions {
-  Key: string
-  Values: string[]
-  MatchOptions: string[]
+  Key: string;
+  Values: string[];
+  MatchOptions: string[];
 }
 
 export interface AnomaliesList {
-  Anomalies: Anomaly[]
+  Anomalies: Anomaly[];
 }
 
 export interface Anomaly {
-  AnomalyId: string
-  AnomalyStartDate: string
-  AnomalyEndDate: string
-  DimensionValue: string
-  RootCauses: RootCause[]
-  AnomalyScore: AnomalyScore
-  Impact: Impact
-  MonitorArn: string
+  AnomalyId: string;
+  AnomalyStartDate: string;
+  AnomalyEndDate: string;
+  DimensionValue: string;
+  RootCauses: RootCause[];
+  AnomalyScore: AnomalyScore;
+  Impact: Impact;
+  MonitorArn: string;
 }
 
 export interface RootCause {
-  Service: string
-  Region?: string
-  LinkedAccount: string
-  UsageType?: string
-  LinkedAccountName: string
+  Service: string;
+  Region?: string;
+  LinkedAccount: string;
+  UsageType?: string;
+  LinkedAccountName: string;
 }
 
 export interface AnomalyScore {
-  MaxScore: number
-  CurrentScore: number
+  MaxScore: number;
+  CurrentScore: number;
 }
 
 export interface Impact {
-  MaxImpact: number
-  TotalImpact: number
-  TotalActualSpend: number
-  TotalExpectedSpend: number
-  TotalImpactPercentage?: number
+  MaxImpact: number;
+  TotalImpact: number;
+  TotalActualSpend: number;
+  TotalExpectedSpend: number;
+  TotalImpactPercentage?: number;
 }
 
-export interface ParameterSetting{
-  parameters: Parameters
+export interface ParameterSetting {
+  parameters: Parameters;
 }
 
 export interface Parameters {
-  alert: number
-  action: number
+  alert: number;
+  action: number;
 }
 
 type EventType = AnomaliesList | Anomaly | ParameterSetting;
 
-const s3Client = new MockS3Client();
+const s3Client = new S3Client(config);
 const bucketName = "timebucketstamp";
 
-const config = { region: "eu-west-2",
-	         credentials: {
-		        accessKeyId: process.env["AWS_ACCESS_KEY_ID"],
-			secretAccessKey: process.env["AWS_SECRET_ACCESS_KEY"],
-			sessionToken: process.env["AWS_SESSION_TOKEN"]
-		 }
+const config = {
+  region: "eu-west-2",
+  credentials: {
+    accessKeyId: process.env["AWS_ACCESS_KEY_ID"],
+    secretAccessKey: process.env["AWS_SECRET_ACCESS_KEY"],
+    sessionToken: process.env["AWS_SESSION_TOKEN"],
+  },
 };
 
 const cclient = new CostExplorerClient(config);
@@ -120,7 +125,6 @@ export const handler = async (
   event: EventType,
   context: Context
 ): Promise<APIGatewayProxyResult> => {
-
   console.log("EVENT is ");
   console.dir(event);
 
@@ -128,20 +132,19 @@ export const handler = async (
   let TEAM_SPEND_ACTION;
 
   let ARClist;
-  if (("Anomalies" in event) && (event.Anomalies)) {
+  if ("Anomalies" in event && event.Anomalies) {
     console.log(`HAVE ANOMALIES`);
     ARClist = event.Anomalies.map((x) => x.RootCauses);
     console.log("ARClist");
     console.dir(ARClist);
     console.log(`ARClist length is ${ARClist.length}`);
-  }
-  else {
-    if (("RootCauses" in event) && (event.RootCauses)) {
-      ARClist = [ event.RootCauses ];
-    } else if (("parameters" in event) && (event.parameters)) {
-       if (event.parameters.action) {
-         TEAM_SPEND_ACTION = Number(event.parameters.action);
-         action_set = true;
+  } else {
+    if ("RootCauses" in event && event.RootCauses) {
+      ARClist = [event.RootCauses];
+    } else if ("parameters" in event && event.parameters) {
+      if (event.parameters.action) {
+        TEAM_SPEND_ACTION = Number(event.parameters.action);
+        action_set = true;
       }
     }
   }
@@ -154,25 +157,26 @@ export const handler = async (
   });
 
   try {
-//    const linput = { // GetFunctionConfigurationRequest
-//	FunctionName: "arn:aws:lambda:eu-west-2:778666285893:function:spend-team-lambda"
-//    };
-//    const lcommand = new GetFunctionConfigurationCommand(linput);
-//    const lresponse = await lclient.send(lcommand);
-//    console.dir(lresponse);
+    //    const linput = { // GetFunctionConfigurationRequest
+    //	FunctionName: "arn:aws:lambda:eu-west-2:778666285893:function:spend-team-lambda"
+    //    };
+    //    const lcommand = new GetFunctionConfigurationCommand(linput);
+    //    const lresponse = await lclient.send(lcommand);
+    //    console.dir(lresponse);
 
-//    const uclient = new LambdaClient(config);
-//    const ucommand = new UpdateFunctionConfigurationCommand(lresponse);
-//    const uresponse = await uclient.send(ucommand);
+    //    const uclient = new LambdaClient(config);
+    //    const ucommand = new UpdateFunctionConfigurationCommand(lresponse);
+    //    const uresponse = await uclient.send(ucommand);
 
     if (action_set) {
       let alert_details = [];
       let action_arn: string;
       let current_action_te;
 
-      const cinput = { // GetAnomalySubscriptionsRequest
+      const cinput = {
+        // GetAnomalySubscriptionsRequest
         MonitorArn: MonitorARN,
-        MaxResults: MAXResults
+        MaxResults: MAXResults,
       };
       const gasccommand = new GetAnomalySubscriptionsCommand(cinput);
       const cresponse = await cclient.send(gasccommand);
@@ -185,18 +189,22 @@ export const handler = async (
           current_action_te = subscription.ThresholdExpression;
         } else if (address.endsWith("TeamSpendAlert")) {
           console.log(`ALERT FOUND -> ${subscription.SubscriptionName}`);
-          const sub_details = {name: subscription.SubscriptionName, arn: subscription.SubscriptionArn, te: subscription.ThresholdExpression};
+          const sub_details = {
+            name: subscription.SubscriptionName,
+            arn: subscription.SubscriptionArn,
+            te: subscription.ThresholdExpression,
+          };
           alert_details.push(sub_details);
         } else {
           console.log("XXX FOUND");
         }
       }
 
-      current_action_te.Dimensions.Values = [ `${TEAM_SPEND_ACTION}` ];
-      const cinput2 = { 
+      current_action_te.Dimensions.Values = [`${TEAM_SPEND_ACTION}`];
+      const cinput2 = {
         ThresholdExpression: current_action_te,
-        SubscriptionArn: action_arn
-      }
+        SubscriptionArn: action_arn,
+      };
 
       const ccommand = new UpdateAnomalySubscriptionCommand(cinput2);
       const cresponse2 = await cclient.send(ccommand);
@@ -208,22 +216,22 @@ export const handler = async (
         const arn = detail.arn;
         const value = Number(detail.name.substring(TEAMSPENDLEN)) * onepercent;
         const te = detail.te;
-        te.Dimensions.Values = [ `${value}` ];
+        te.Dimensions.Values = [`${value}`];
 
-        const input = {SubscriptionArn: arn, ThresholdExpression: te}
+        const input = { SubscriptionArn: arn, ThresholdExpression: te };
         const command = new UpdateAnomalySubscriptionCommand(input);
         const response = await cclient.send(command);
       }
     } else {
       // action is not set so here we add code to suspend account IDs
       if (ARClist && ARClist.length) {
-        let closed_accounts: Set<string> = new Set;
+        let closed_accounts: Set<string> = new Set();
         for (const RC_list of ARClist) {
           for (const root_cause of RC_list) {
             const ac_id_to_close = root_cause.LinkedAccount;
             if (!closed_accounts.has(ac_id_to_close)) {
               console.log(`Would close Account ${ac_id_to_close}`);
-/*
+              /*
               const input = { // CloseAccountRequest
                 AccountId: ac_id_to_close
               };
@@ -248,14 +256,14 @@ export const handler = async (
       event: event,
     };
 
-    // Simulate putting object in S3 bucket
-    await s3Client.send({
-      constructor: { name: "PutObjectCommand" },
+    const putCommand = new PutObjectCommand({
       Bucket: bucketName,
       Key: key,
       Body: JSON.stringify(content),
       ContentType: "application/json",
     });
+
+    await s3Client.send(putCommand);
 
     console.log(`Object ${key} simulated creation in bucket ${bucketName}`);
 
