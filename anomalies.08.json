@@ -1,0 +1,137 @@
+{
+    "Anomalies": [
+        {
+            "AnomalyId": "d452ebfc-91be-41cc-aa8a-0441584d874e",
+            "AnomalyStartDate": "2024-08-05T00:00:00Z",
+            "AnomalyEndDate": "2024-08-05T00:00:00Z",
+            "DimensionValue": "Amazon GuardDuty",
+            "RootCauses": [
+                {
+                    "Service": "Amazon GuardDuty",
+                    "Region": "eu-west-2",
+                    "LinkedAccount": "778666285893",
+                    "UsageType": "EUW2-PaidEventsAnalyzed",
+                    "LinkedAccountName": "RTNPlaygroundDevOps"
+                }
+            ],
+            "AnomalyScore": {
+                "MaxScore": 0.22,
+                "CurrentScore": 0.22
+            },
+            "Impact": {
+                "MaxImpact": 0.02,
+                "TotalImpact": 0.02,
+                "TotalActualSpend": 0.03,
+                "TotalExpectedSpend": 0.01,
+                "TotalImpactPercentage": 200.0
+            },
+            "MonitorArn": "arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34"
+        },
+        {
+            "AnomalyId": "ecb86eac-ae49-4f83-9511-c39f670f9485",
+            "AnomalyStartDate": "2024-08-05T00:00:00Z",
+            "AnomalyEndDate": "2024-08-05T00:00:00Z",
+            "DimensionValue": "Amazon Elastic Block Store",
+            "RootCauses": [
+                {
+                    "Service": "Amazon Elastic Block Store",
+                    "Region": "eu-west-2",
+                    "LinkedAccount": "778666285893",
+                    "UsageType": "EUW2-NatGateway-Hours",
+                    "LinkedAccountName": "RTNPlaygroundDevOps"
+                }
+            ],
+            "AnomalyScore": {
+                "MaxScore": 0.55,
+                "CurrentScore": 0.55
+            },
+            "Impact": {
+                "MaxImpact": 0.32,
+                "TotalImpact": 0.32,
+                "TotalActualSpend": 0.35,
+                "TotalExpectedSpend": 0.03,
+                "TotalImpactPercentage": 1066.67
+            },
+            "MonitorArn": "arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34"
+        },
+        {
+            "AnomalyId": "b718f0a9-1a5a-4b3b-b92b-82122505b32c",
+            "AnomalyStartDate": "2024-08-05T00:00:00Z",
+            "AnomalyEndDate": "2024-08-05T00:00:00Z",
+            "DimensionValue": "Amazon Virtual Private Cloud",
+            "RootCauses": [
+                {
+                    "Service": "Amazon Virtual Private Cloud",
+                    "Region": "eu-west-2",
+                    "LinkedAccount": "778666285893",
+                    "UsageType": "EUW2-VpcEndpoint-Hours",
+                    "LinkedAccountName": "RTNPlaygroundDevOps"
+                }
+            ],
+            "AnomalyScore": {
+                "MaxScore": 0.5,
+                "CurrentScore": 0.5
+            },
+            "Impact": {
+                "MaxImpact": 0.18,
+                "TotalImpact": 0.18,
+                "TotalActualSpend": 0.18,
+                "TotalExpectedSpend": 0.0
+            },
+            "MonitorArn": "arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34"
+        },
+        {
+            "AnomalyId": "ff6fdf41-0faf-4c33-8774-513955151c94",
+            "AnomalyStartDate": "2024-08-05T00:00:00Z",
+            "AnomalyEndDate": "2024-08-05T00:00:00Z",
+            "DimensionValue": "AWS Security Hub",
+            "RootCauses": [
+                {
+                    "Service": "AWS Security Hub",
+                    "Region": "eu-west-2",
+                    "LinkedAccount": "778666285893",
+                    "UsageType": "EUW2-PaidComplianceCheck",
+                    "LinkedAccountName": "RTNPlaygroundDevOps"
+                }
+            ],
+            "AnomalyScore": {
+                "MaxScore": 0.43,
+                "CurrentScore": 0.43
+            },
+            "Impact": {
+                "MaxImpact": 0.21,
+                "TotalImpact": 0.21,
+                "TotalActualSpend": 0.28,
+                "TotalExpectedSpend": 0.07,
+                "TotalImpactPercentage": 300.0
+            },
+            "MonitorArn": "arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34"
+        },
+        {
+            "AnomalyId": "e534b9c0-42c1-44d4-a1f1-015b2b59487f",
+            "AnomalyStartDate": "2024-08-05T00:00:00Z",
+            "AnomalyEndDate": "2024-08-05T00:00:00Z",
+            "DimensionValue": "AWS Config",
+            "RootCauses": [
+                {
+                    "Service": "AWS Config",
+                    "Region": "eu-west-2",
+                    "LinkedAccount": "778666285893",
+                    "UsageType": "EUW2-ConfigurationItemRecorded",
+                    "LinkedAccountName": "RTNPlaygroundDevOps"
+                }
+            ],
+            "AnomalyScore": {
+                "MaxScore": 0.54,
+                "CurrentScore": 0.54
+            },
+            "Impact": {
+                "MaxImpact": 1.02,
+                "TotalImpact": 1.02,
+                "TotalActualSpend": 1.02,
+                "TotalExpectedSpend": 0.0
+            },
+            "MonitorArn": "arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34"
+        }
+    ]
+}

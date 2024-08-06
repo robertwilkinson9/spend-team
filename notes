@@ -243,4 +243,5 @@ robert@CIC001419:~/src/typescript/spend-team$ aws ecr create-repository --reposi
         }
     }
 }
+robert@CIC001419:~/src/typescript/spend-team$ aws ce get-anomalies --date-interval 'StartDate=2024-08-01,EndDate=2024-08-06'
 robert@CIC001419:~/src/typescript/spend-team$
