@@ -95,7 +95,7 @@ export interface Parameters {
   action: number
 }
 
-type EventType = AnomaliesList | ParameterSetting;
+type EventType = AnomaliesList | Anomaly | ParameterSetting;
 
 const s3Client = new MockS3Client();
 const bucketName = "timebucketstamp";
@@ -135,10 +135,14 @@ export const handler = async (
     console.dir(ARClist);
     console.log(`ARClist length is ${ARClist.length}`);
   }
-  else if (("parameters" in event) && (event.parameters)) {
-    if (event.parameters.action) {
-      TEAM_SPEND_ACTION = Number(event.parameters.action);
-      action_set = true;
+  else {
+    if (("RootCauses" in event) && (event.RootCauses)) {
+      ARClist = [ event.RootCauses ];
+    } else if (("parameters" in event) && (event.parameters)) {
+       if (event.parameters.action) {
+         TEAM_SPEND_ACTION = Number(event.parameters.action);
+         action_set = true;
+      }
     }
   }
   const currentTimestamp = new Date().toISOString();
@@ -212,7 +216,7 @@ export const handler = async (
       }
     } else {
       // action is not set so here we add code to suspend account IDs
-      if (ARClist.length) {
+      if (ARClist && ARClist.length) {
         let closed_accounts: Set<string> = new Set;
         for (const RC_list of ARClist) {
           for (const root_cause of RC_list) {
