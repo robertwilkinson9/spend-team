@@ -101,7 +101,6 @@ export interface Parameters {
 
 type EventType = AnomaliesList | Anomaly | ParameterSetting;
 
-const s3Client = new S3Client(config);
 const bucketName = "timebucketstamp";
 
 const config = {
@@ -113,6 +112,7 @@ const config = {
   },
 };
 
+const s3Client = new S3Client(config);
 const cclient = new CostExplorerClient(config);
 //const lclient = new LambdaClient(config);
 const oclient = new OrganizationsClient(config);
@@ -170,7 +170,7 @@ export const handler = async (
 
     if (action_set) {
       let alert_details = [];
-      let action_arn: string;
+      let action_arn: string | undefined = "";
       let current_action_te;
 
       const cinput = {
@@ -181,43 +181,56 @@ export const handler = async (
       const gasccommand = new GetAnomalySubscriptionsCommand(cinput);
       const cresponse = await cclient.send(gasccommand);
 
-      for (const subscription of cresponse.AnomalySubscriptions) {
-        const address = subscription.Subscribers[0].Address; // subscribers should be a list too? XXX
-        if (address.endsWith("TeamSpendAction")) {
-          console.log("ACTION FOUND");
-          action_arn = subscription.SubscriptionArn;
-          current_action_te = subscription.ThresholdExpression;
-        } else if (address.endsWith("TeamSpendAlert")) {
-          console.log(`ALERT FOUND -> ${subscription.SubscriptionName}`);
-          const sub_details = {
-            name: subscription.SubscriptionName,
-            arn: subscription.SubscriptionArn,
-            te: subscription.ThresholdExpression,
-          };
-          alert_details.push(sub_details);
-        } else {
-          console.log("XXX FOUND");
+      if (cresponse && cresponse.AnomalySubscriptions) {
+        for (const subscription of cresponse.AnomalySubscriptions) {
+          if (subscription.Subscribers) {
+            for (const subscriber of subscription.Subscribers) {
+              const address = subscriber.Address || "NULL ADDRESS";
+              if (address.endsWith("TeamSpendAction")) {
+                console.log("ACTION FOUND");
+                action_arn = subscription.SubscriptionArn;
+                current_action_te = subscription.ThresholdExpression;
+              } else if (address.endsWith("TeamSpendAlert")) {
+                console.log(`ALERT FOUND -> ${subscription.SubscriptionName}`);
+                const sub_details = {
+                  name: subscription.SubscriptionName,
+                  arn: subscription.SubscriptionArn,
+                  te: subscription.ThresholdExpression,
+                };
+                alert_details.push(sub_details);
+              } else {
+                console.log(`XXX FOUND ADDRESS ${address}`);
+              }
+            }
+          } else {
+            console.log(`XXX - NO SUBSCRIBERS`);
+          }
         }
+      } else {
+        console.log(`XXX - NO RESPONSE OR SUBSCRIPTIONS`);
       }
 
-      current_action_te.Dimensions.Values = [`${TEAM_SPEND_ACTION}`];
+      if (current_action_te && current_action_te.Dimensions) {
+        current_action_te.Dimensions.Values = [`${TEAM_SPEND_ACTION}`];
+      }
       const cinput2 = {
         ThresholdExpression: current_action_te,
-        SubscriptionArn: action_arn,
+        SubscriptionArn: action_arn
       };
 
       const ccommand = new UpdateAnomalySubscriptionCommand(cinput2);
       const cresponse2 = await cclient.send(ccommand);
 
       // now compute 20%, 40%, 60%, 80% of new TeamSpendAction and update alerts
-      const onepercent = TEAM_SPEND_ACTION / 100;
+      const onepercent = TEAM_SPEND_ACTION ? TEAM_SPEND_ACTION / 100 : 0;
 
       for (const detail of alert_details) {
         const arn = detail.arn;
-        const value = Number(detail.name.substring(TEAMSPENDLEN)) * onepercent;
+        const value = Number(detail.name?.substring(TEAMSPENDLEN)) * onepercent;
         const te = detail.te;
-        te.Dimensions.Values = [`${value}`];
-
+        if (te && te.Dimensions) {
+          te.Dimensions.Values = [`${value}`];
+        }
         const input = { SubscriptionArn: arn, ThresholdExpression: te };
         const command = new UpdateAnomalySubscriptionCommand(input);
         const response = await cclient.send(command);
