@@ -1,18 +1,22 @@
 import { Context, APIGatewayProxyResult, APIGatewayEvent } from "aws-lambda";
 //import { LambdaClient, GetFunctionConfigurationCommand, UpdateFunctionConfigurationCommand } from "@aws-sdk/client-lambda";
 import {
+  CostExplorerClientConfig,
   CostExplorerClient,
   GetAnomalySubscriptionsCommand,
-  CreateAnomalySubscriptionCommand,
-  UpdateAnomalySubscriptionCommand,
-  DeleteAnomalySubscriptionCommand,
+  UpdateAnomalySubscriptionCommand
 } from "@aws-sdk/client-cost-explorer";
 // see https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/cost-explorer/
 import {
+  OrganizationsClientConfig,
   OrganizationsClient,
   CloseAccountCommand,
 } from "@aws-sdk/client-organizations"; // ES Modules import
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { 
+  S3ClientConfig, 
+  S3Client, 
+  PutObjectCommand
+} from "@aws-sdk/client-s3";
 
 const ZERO = 0;
 const TEN = 10;
@@ -106,16 +110,22 @@ const bucketName = "timebucketstamp";
 const config = {
   region: "eu-west-2",
   credentials: {
-    accessKeyId: process.env["AWS_ACCESS_KEY_ID"],
-    secretAccessKey: process.env["AWS_SECRET_ACCESS_KEY"],
-    sessionToken: process.env["AWS_SESSION_TOKEN"],
+    accessKeyId: process.env["AWS_ACCESS_KEY_ID"] || "",
+    secretAccessKey: process.env["AWS_SECRET_ACCESS_KEY"] || "",
+    sessionToken: process.env["AWS_SESSION_TOKEN"] || "",
   },
 };
 
-const s3Client = new S3Client(config);
-const cclient = new CostExplorerClient(config);
 //const lclient = new LambdaClient(config);
-const oclient = new OrganizationsClient(config);
+
+const s3cc: S3ClientConfig = config;
+const s3Client = new S3Client(s3cc);
+
+const cecc: CostExplorerClientConfig = config;
+const cclient = new CostExplorerClient(cecc);
+
+const occ: OrganizationsClientConfig = config;
+const oclient = new OrganizationsClient(occ);
 
 // Store timestamps of Lambda invocations
 let invocationTimestamps: string[] = [];
