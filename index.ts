@@ -1,58 +1,29 @@
-import { Context, APIGatewayProxyResult, APIGatewayEvent } from "aws-lambda";
-//import { LambdaClient, GetFunctionConfigurationCommand, UpdateFunctionConfigurationCommand } from "@aws-sdk/client-lambda";
+import { Context, APIGatewayProxyResult } from "aws-lambda";
 import {
   CostExplorerClient,
   GetAnomalySubscriptionsCommand,
-  CreateAnomalySubscriptionCommand,
   UpdateAnomalySubscriptionCommand,
-  DeleteAnomalySubscriptionCommand,
 } from "@aws-sdk/client-cost-explorer";
-// see https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/cost-explorer/
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+
+import { GetAnomalySubscriptionsCommandOutput } from "@aws-sdk/client-cost-explorer";
 import {
   OrganizationsClient,
   CloseAccountCommand,
-} from "@aws-sdk/client-organizations"; // ES Modules import
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+} from "@aws-sdk/client-organizations";
 
-const ZERO = 0;
-const TEN = 10;
-const TWENTY = 20;
-const FIFTY = 50;
-const EIGHTY = 80;
-const HUNDRED = 100;
+export const ZERO = 0;
+export const TEN = 10;
+export const TWENTY = 20;
+export const FIFTY = 50;
+export const EIGHTY = 80;
+export const HUNDRED = 100;
 
-const TEAMSPENDLEN = 9; // length of TeamSpend string
+export const TEAMSPENDLEN = 9; // length of TeamSpend string
 
-const MonitorARN =
+export const MonitorARN =
   "arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34";
-const MAXResults = TWENTY;
-
-export interface AnomalySubscription {
-  SubscriptionArn: string;
-  AccountId: string;
-  MonitorArnList: string[];
-  Subscribers: Subscriber[];
-  Threshold: number;
-  Frequency: string;
-  SubscriptionName: string;
-  ThresholdExpression: ThresholdExpression;
-}
-
-export interface Subscriber {
-  Address: string;
-  Type: string;
-  Status: string;
-}
-
-export interface ThresholdExpression {
-  Dimensions: Dimensions;
-}
-
-export interface Dimensions {
-  Key: string;
-  Values: string[];
-  MatchOptions: string[];
-}
+export const MAXResults = TWENTY;
 
 export interface AnomaliesList {
   Anomalies: Anomaly[];
@@ -99,10 +70,17 @@ export interface Parameters {
   action: number;
 }
 
-type EventType = AnomaliesList | Anomaly | ParameterSetting;
+export type EventType = AnomaliesList | Anomaly | ParameterSetting;
 
-const s3Client = new S3Client(config);
-const bucketName = "timebucketstamp";
+// Extract the AnomalySubscription type from the AWS SDK type
+export type AnomalySubscription = NonNullable<
+  GetAnomalySubscriptionsCommandOutput["AnomalySubscriptions"]
+>[number];
+
+// Extract the ThresholdExpression type from AnomalySubscription
+export type ThresholdExpression = NonNullable<
+  AnomalySubscription["ThresholdExpression"]
+>;
 
 const config = {
   region: "eu-west-2",
@@ -113,41 +91,36 @@ const config = {
   },
 };
 
+const s3Client = new S3Client(config);
+const bucketName = "timebucketstamp";
+
 const cclient = new CostExplorerClient(config);
-//const lclient = new LambdaClient(config);
 const oclient = new OrganizationsClient(config);
 
-// Store timestamps of Lambda invocations
 let invocationTimestamps: string[] = [];
 
-//  event: APIGatewayEvent,
 export const handler = async (
   event: EventType,
   context: Context
 ): Promise<APIGatewayProxyResult> => {
-  console.log("EVENT is ");
-  console.dir(event);
+  console.log("EVENT is ", JSON.stringify(event, null, 2));
 
   let action_set = false;
-  let TEAM_SPEND_ACTION;
+  let TEAM_SPEND_ACTION: number | undefined;
 
-  let ARClist;
-  if ("Anomalies" in event && event.Anomalies) {
+  let ARClist: RootCause[][] = [];
+  if ("Anomalies" in event && Array.isArray(event.Anomalies)) {
     console.log(`HAVE ANOMALIES`);
     ARClist = event.Anomalies.map((x) => x.RootCauses);
-    console.log("ARClist");
-    console.dir(ARClist);
+    console.log("ARClist", JSON.stringify(ARClist, null, 2));
     console.log(`ARClist length is ${ARClist.length}`);
-  } else {
-    if ("RootCauses" in event && event.RootCauses) {
-      ARClist = [event.RootCauses];
-    } else if ("parameters" in event && event.parameters) {
-      if (event.parameters.action) {
-        TEAM_SPEND_ACTION = Number(event.parameters.action);
-        action_set = true;
-      }
-    }
+  } else if ("RootCauses" in event && Array.isArray(event.RootCauses)) {
+    ARClist = [event.RootCauses];
+  } else if ("parameters" in event && event.parameters.action) {
+    TEAM_SPEND_ACTION = Number(event.parameters.action);
+    action_set = true;
   }
+
   const currentTimestamp = new Date().toISOString();
   invocationTimestamps.push(currentTimestamp);
 
@@ -157,87 +130,94 @@ export const handler = async (
   });
 
   try {
-    //    const linput = { // GetFunctionConfigurationRequest
-    //	FunctionName: "arn:aws:lambda:eu-west-2:778666285893:function:spend-team-lambda"
-    //    };
-    //    const lcommand = new GetFunctionConfigurationCommand(linput);
-    //    const lresponse = await lclient.send(lcommand);
-    //    console.dir(lresponse);
-
-    //    const uclient = new LambdaClient(config);
-    //    const ucommand = new UpdateFunctionConfigurationCommand(lresponse);
-    //    const uresponse = await uclient.send(ucommand);
-
-    if (action_set) {
-      let alert_details = [];
-      let action_arn: string;
-      let current_action_te;
+    if (action_set && TEAM_SPEND_ACTION !== undefined) {
+      let alert_details: {
+        name: string;
+        arn: string;
+        te: ThresholdExpression;
+      }[] = [];
+      let action_arn: string | undefined;
+      let current_action_te: ThresholdExpression | undefined;
 
       const cinput = {
-        // GetAnomalySubscriptionsRequest
         MonitorArn: MonitorARN,
         MaxResults: MAXResults,
       };
       const gasccommand = new GetAnomalySubscriptionsCommand(cinput);
       const cresponse = await cclient.send(gasccommand);
 
-      for (const subscription of cresponse.AnomalySubscriptions) {
-        const address = subscription.Subscribers[0].Address; // subscribers should be a list too? XXX
-        if (address.endsWith("TeamSpendAction")) {
-          console.log("ACTION FOUND");
-          action_arn = subscription.SubscriptionArn;
-          current_action_te = subscription.ThresholdExpression;
-        } else if (address.endsWith("TeamSpendAlert")) {
-          console.log(`ALERT FOUND -> ${subscription.SubscriptionName}`);
-          const sub_details = {
-            name: subscription.SubscriptionName,
-            arn: subscription.SubscriptionArn,
-            te: subscription.ThresholdExpression,
-          };
-          alert_details.push(sub_details);
-        } else {
-          console.log("XXX FOUND");
+      if (cresponse.AnomalySubscriptions) {
+        for (const subscription of cresponse.AnomalySubscriptions) {
+          if (subscription.Subscribers && subscription.Subscribers.length > 0) {
+            const address = subscription.Subscribers[0].Address;
+            if (address && address.endsWith("TeamSpendAction")) {
+              console.log("ACTION FOUND");
+              action_arn = subscription.SubscriptionArn;
+              current_action_te = subscription.ThresholdExpression;
+            } else if (address && address.endsWith("TeamSpendAlert")) {
+              console.log(`ALERT FOUND -> ${subscription.SubscriptionName}`);
+              if (
+                subscription.SubscriptionName &&
+                subscription.SubscriptionArn &&
+                subscription.ThresholdExpression
+              ) {
+                alert_details.push({
+                  name: subscription.SubscriptionName,
+                  arn: subscription.SubscriptionArn,
+                  te: subscription.ThresholdExpression,
+                });
+              }
+            } else {
+              console.log("XXX FOUND");
+            }
+          }
         }
       }
 
-      current_action_te.Dimensions.Values = [`${TEAM_SPEND_ACTION}`];
-      const cinput2 = {
-        ThresholdExpression: current_action_te,
-        SubscriptionArn: action_arn,
-      };
+      if (current_action_te && action_arn) {
+        if (current_action_te.Dimensions) {
+          current_action_te.Dimensions.Values = [`${TEAM_SPEND_ACTION}`];
+        } else {
+          console.warn("Action ThresholdExpression Dimensions is undefined");
+        }
 
-      const ccommand = new UpdateAnomalySubscriptionCommand(cinput2);
-      const cresponse2 = await cclient.send(ccommand);
+        const cinput2 = {
+          ThresholdExpression: current_action_te,
+          SubscriptionArn: action_arn,
+        };
 
-      // now compute 20%, 40%, 60%, 80% of new TeamSpendAction and update alerts
-      const onepercent = TEAM_SPEND_ACTION / 100;
+        const ccommand = new UpdateAnomalySubscriptionCommand(cinput2);
+        await cclient.send(ccommand);
 
-      for (const detail of alert_details) {
-        const arn = detail.arn;
-        const value = Number(detail.name.substring(TEAMSPENDLEN)) * onepercent;
-        const te = detail.te;
-        te.Dimensions.Values = [`${value}`];
+        const onepercent = TEAM_SPEND_ACTION / 100;
 
-        const input = { SubscriptionArn: arn, ThresholdExpression: te };
-        const command = new UpdateAnomalySubscriptionCommand(input);
-        const response = await cclient.send(command);
+        for (const detail of alert_details) {
+          const value =
+            Number(detail.name.substring(TEAMSPENDLEN)) * onepercent;
+          if (detail.te.Dimensions) {
+            detail.te.Dimensions.Values = [`${value}`];
+          } else {
+            console.warn(
+              `Alert ThresholdExpression Dimensions is undefined for ${detail.name}`
+            );
+          }
+
+          const input = {
+            SubscriptionArn: detail.arn,
+            ThresholdExpression: detail.te,
+          };
+          const command = new UpdateAnomalySubscriptionCommand(input);
+          await cclient.send(command);
+        }
       }
     } else {
-      // action is not set so here we add code to suspend account IDs
-      if (ARClist && ARClist.length) {
-        let closed_accounts: Set<string> = new Set();
+      if (ARClist.length > 0) {
+        const closed_accounts: Set<string> = new Set();
         for (const RC_list of ARClist) {
           for (const root_cause of RC_list) {
             const ac_id_to_close = root_cause.LinkedAccount;
             if (!closed_accounts.has(ac_id_to_close)) {
               console.log(`Would close Account ${ac_id_to_close}`);
-              /*
-              const input = { // CloseAccountRequest
-                AccountId: ac_id_to_close
-              };
-              const command = new CloseAccountCommand(input);
-              const response = await client.send(command);
-*/
               closed_accounts.add(ac_id_to_close);
             }
           }
@@ -245,10 +225,8 @@ export const handler = async (
       }
     }
 
-    // Generate timestamped key
     const key = `lambda-run-${currentTimestamp}.json`;
 
-    // Create object content
     const content = {
       timestamp: currentTimestamp,
       message: "Lambda function executed",
@@ -265,7 +243,7 @@ export const handler = async (
 
     await s3Client.send(putCommand);
 
-    console.log(`Object ${key} simulated creation in bucket ${bucketName}`);
+    console.log(`Object ${key} created in bucket ${bucketName}`);
 
     return {
       statusCode: 200,
