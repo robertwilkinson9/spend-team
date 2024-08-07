@@ -1,18 +1,19 @@
-import { Context, APIGatewayProxyResult } from "aws-lambda";
+import { 
+  Context, 
+  APIGatewayProxyResult
+} from "aws-lambda";
 import {
   CostExplorerClientConfig,
   CostExplorerClient,
   GetAnomalySubscriptionsCommand,
+  GetAnomalySubscriptionsCommandOutput,
   UpdateAnomalySubscriptionCommand
 } from "@aws-sdk/client-cost-explorer";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-
-import { GetAnomalySubscriptionsCommandOutput } from "@aws-sdk/client-cost-explorer";
 import {
   OrganizationsClientConfig,
   OrganizationsClient,
   CloseAccountCommand,
-} from "@aws-sdk/client-organizations"; // ES Modules import
+} from "@aws-sdk/client-organizations";
 import { 
   S3ClientConfig, 
   S3Client, 
@@ -171,9 +172,9 @@ export const handler = async (
               } else if (address.endsWith("TeamSpendAlert")) {
                 console.log(`ALERT FOUND -> ${subscription.SubscriptionName}`);
                 const sub_details = {
-                  name: subscription.SubscriptionName,
-                  arn: subscription.SubscriptionArn,
-                  te: subscription.ThresholdExpression,
+                  name: subscription.SubscriptionName || "",
+                  arn: subscription.SubscriptionArn || "",
+                  te: subscription.ThresholdExpression || {},
                 };
                 alert_details.push(sub_details);
               } else {
@@ -214,7 +215,7 @@ export const handler = async (
         const response = await cclient.send(command);
       }
     } else {
-      if (ARClist.length > 0) {
+      if (ARClist && ARClist.length) {
         const closed_accounts: Set<string> = new Set();
         for (const RC_list of ARClist) {
           for (const root_cause of RC_list) {
