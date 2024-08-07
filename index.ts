@@ -1,16 +1,23 @@
 import { Context, APIGatewayProxyResult } from "aws-lambda";
 import {
+  CostExplorerClientConfig,
   CostExplorerClient,
   GetAnomalySubscriptionsCommand,
-  UpdateAnomalySubscriptionCommand,
+  UpdateAnomalySubscriptionCommand
 } from "@aws-sdk/client-cost-explorer";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 import { GetAnomalySubscriptionsCommandOutput } from "@aws-sdk/client-cost-explorer";
 import {
+  OrganizationsClientConfig,
   OrganizationsClient,
   CloseAccountCommand,
-} from "@aws-sdk/client-organizations";
+} from "@aws-sdk/client-organizations"; // ES Modules import
+import { 
+  S3ClientConfig, 
+  S3Client, 
+  PutObjectCommand
+} from "@aws-sdk/client-s3";
 
 export const ZERO = 0;
 export const TEN = 10;
@@ -85,17 +92,24 @@ export type ThresholdExpression = NonNullable<
 const config = {
   region: "eu-west-2",
   credentials: {
-    accessKeyId: process.env["AWS_ACCESS_KEY_ID"],
-    secretAccessKey: process.env["AWS_SECRET_ACCESS_KEY"],
-    sessionToken: process.env["AWS_SESSION_TOKEN"],
+    accessKeyId: process.env["AWS_ACCESS_KEY_ID"] || "",
+    secretAccessKey: process.env["AWS_SECRET_ACCESS_KEY"] || "",
+    sessionToken: process.env["AWS_SESSION_TOKEN"] || "",
   },
 };
 
-const s3Client = new S3Client(config);
 const bucketName = "timebucketstamp";
 
-const cclient = new CostExplorerClient(config);
-const oclient = new OrganizationsClient(config);
+//const lclient = new LambdaClient(config);
+
+const s3cc: S3ClientConfig = config;
+const s3Client = new S3Client(s3cc);
+
+const cecc: CostExplorerClientConfig = config;
+const cclient = new CostExplorerClient(cecc);
+
+const occ: OrganizationsClientConfig = config;
+const oclient = new OrganizationsClient(occ);
 
 let invocationTimestamps: string[] = [];
 
@@ -138,7 +152,6 @@ export const handler = async (
       }[] = [];
       let action_arn: string | undefined;
       let current_action_te: ThresholdExpression | undefined;
-
       const cinput = {
         MonitorArn: MonitorARN,
         MaxResults: MAXResults,
@@ -146,69 +159,59 @@ export const handler = async (
       const gasccommand = new GetAnomalySubscriptionsCommand(cinput);
       const cresponse = await cclient.send(gasccommand);
 
-      if (cresponse.AnomalySubscriptions) {
+      if (cresponse && cresponse.AnomalySubscriptions) {
         for (const subscription of cresponse.AnomalySubscriptions) {
-          if (subscription.Subscribers && subscription.Subscribers.length > 0) {
-            const address = subscription.Subscribers[0].Address;
-            if (address && address.endsWith("TeamSpendAction")) {
-              console.log("ACTION FOUND");
-              action_arn = subscription.SubscriptionArn;
-              current_action_te = subscription.ThresholdExpression;
-            } else if (address && address.endsWith("TeamSpendAlert")) {
-              console.log(`ALERT FOUND -> ${subscription.SubscriptionName}`);
-              if (
-                subscription.SubscriptionName &&
-                subscription.SubscriptionArn &&
-                subscription.ThresholdExpression
-              ) {
-                alert_details.push({
+          if (subscription.Subscribers) {
+            for (const subscriber of subscription.Subscribers) {
+              const address = subscriber.Address || "NULL ADDRESS";
+              if (address.endsWith("TeamSpendAction")) {
+                console.log("ACTION FOUND");
+                action_arn = subscription.SubscriptionArn;
+                current_action_te = subscription.ThresholdExpression;
+              } else if (address.endsWith("TeamSpendAlert")) {
+                console.log(`ALERT FOUND -> ${subscription.SubscriptionName}`);
+                const sub_details = {
                   name: subscription.SubscriptionName,
                   arn: subscription.SubscriptionArn,
                   te: subscription.ThresholdExpression,
-                });
+                };
+                alert_details.push(sub_details);
+              } else {
+                console.log(`XXX FOUND ADDRESS ${address}`);
               }
-            } else {
-              console.log("XXX FOUND");
             }
-          }
-        }
-      }
-
-      if (current_action_te && action_arn) {
-        if (current_action_te.Dimensions) {
-          current_action_te.Dimensions.Values = [`${TEAM_SPEND_ACTION}`];
-        } else {
-          console.warn("Action ThresholdExpression Dimensions is undefined");
-        }
-
-        const cinput2 = {
-          ThresholdExpression: current_action_te,
-          SubscriptionArn: action_arn,
-        };
-
-        const ccommand = new UpdateAnomalySubscriptionCommand(cinput2);
-        await cclient.send(ccommand);
-
-        const onepercent = TEAM_SPEND_ACTION / 100;
-
-        for (const detail of alert_details) {
-          const value =
-            Number(detail.name.substring(TEAMSPENDLEN)) * onepercent;
-          if (detail.te.Dimensions) {
-            detail.te.Dimensions.Values = [`${value}`];
           } else {
-            console.warn(
-              `Alert ThresholdExpression Dimensions is undefined for ${detail.name}`
-            );
+            console.log(`XXX - NO SUBSCRIBERS`);
           }
-
-          const input = {
-            SubscriptionArn: detail.arn,
-            ThresholdExpression: detail.te,
-          };
-          const command = new UpdateAnomalySubscriptionCommand(input);
-          await cclient.send(command);
         }
+      } else {
+        console.log(`XXX - NO RESPONSE OR SUBSCRIPTIONS`);
+      }
+      
+      if (current_action_te && current_action_te.Dimensions) {
+        current_action_te.Dimensions.Values = [`${TEAM_SPEND_ACTION}`];
+      }
+      const cinput2 = {
+        ThresholdExpression: current_action_te,
+        SubscriptionArn: action_arn
+      };
+
+      const ccommand = new UpdateAnomalySubscriptionCommand(cinput2);
+      const cresponse2 = await cclient.send(ccommand);
+
+      // now compute 20%, 40%, 60%, 80% of new TeamSpendAction and update alerts
+      const onepercent = TEAM_SPEND_ACTION ? TEAM_SPEND_ACTION / 100 : 0;
+
+      for (const detail of alert_details) {
+        const arn = detail.arn;
+        const value = Number(detail.name?.substring(TEAMSPENDLEN)) * onepercent;
+        const te = detail.te;
+        if (te && te.Dimensions) {
+          te.Dimensions.Values = [`${value}`];
+        }
+        const input = { SubscriptionArn: arn, ThresholdExpression: te };
+        const command = new UpdateAnomalySubscriptionCommand(input);
+        const response = await cclient.send(command);
       }
     } else {
       if (ARClist.length > 0) {
