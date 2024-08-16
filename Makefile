@@ -17,3 +17,5 @@ update-function: push
 	aws lambda update-function-code --function-name team-spend-action  --image-uri 778666285893.dkr.ecr.eu-west-2.amazonaws.com/team-spend-action:latest
 run: build
 	docker run --platform linux/amd64 -p 9000:8080 --env AWS_ACCESS_KEY_ID=$${AWS_ACCESS_KEY_ID} --env AWS_SECRET_ACCESS_KEY=$${AWS_SECRET_ACCESS_KEY} --env AWS_SESSION_TOKEN=$${AWS_SESSION_TOKEN} team-spend-action:latest
+validate:
+	tofu validate
