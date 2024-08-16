@@ -1,3 +1,14 @@
+provider "aws" {
+  region = "eu-west-2"
+}
+
+variable "awsID" {
+  description = "the AWS ID to use for all resources"
+  type = number
+# it is a number but should it be a string? XXX
+  default = 778666285893
+}
+
 # aws ce get-anomaly-monitors
 # {
 #     "AnomalyMonitors": [
