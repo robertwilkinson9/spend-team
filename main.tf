@@ -146,7 +146,7 @@
 #         "SubscriptionArn": "arn:aws:sns:eu-west-2:778666285893:TeamSpendAlert:da58f922-d3fb-4245-96e9-f639a757a8de"
 #     }
 # }
-`
+
 # aws ce get-anomaly-subscriptions
 # {
 #     "AnomalySubscriptions": [
