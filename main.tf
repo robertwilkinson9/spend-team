@@ -25,6 +25,17 @@ variable "awsID" {
 #     ]
 # }
 
+resource "aws_ce_anomaly_monitor" "service_monitor" {
+  name              = "AWSServiceMonitor"
+  monitor_type      = "DIMENSIONAL"
+  monitor_dimension = "SERVICE"
+}
+
+#import {
+#  to = aws_ce_anomaly_monitor.example
+#  id = "costAnomalyMonitorARN"
+#}
+
 # aws sns list-topics | grep Spend
 #             "TopicArn": "arn:aws:sns:eu-west-2:778666285893:TeamSpendAction"
 #             "TopicArn": "arn:aws:sns:eu-west-2:778666285893:TeamSpendAlert"
