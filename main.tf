@@ -1,3 +1,8 @@
+# this file should become a module after development
+# when so, the provider stanza should be dropped
+# and presumably the awsID itoo? which similarly should be
+# defined at the top level. XXX
+
 provider "aws" {
   region = "eu-west-2"
 # Tags to apply to all AWS resources by default
@@ -12,6 +17,16 @@ variable "awsID" {
   description = "the AWS ID to use for all resources"
   type = number
 # it is a number but should it be a string? XXX
+}
+
+variable "alert_email_address" {
+  description = "the email address for alerts"
+  type = string
+}
+
+variable "action_email_address" {
+  description = "the email address for actions"
+  type = string
 }
 
 # aws ce get-anomaly-monitors
@@ -39,6 +54,24 @@ resource "aws_ce_anomaly_monitor" "service_monitor" {
 #import {
 #  to = aws_ce_anomaly_monitor.example
 #  id = "costAnomalyMonitorARN"
+#}
+
+resource "aws_sns_topic" "team_spend_alert" {
+  name = "team-spend-alert"
+}
+
+#import {
+#  to = aws_sns_topic.team_spend_alert
+#  id = "arn:aws:sns:eu-west-2:0123456789012:team-spend-alert"
+#}
+
+resource "aws_sns_topic" "team_spend_action" {
+  name = "team-spend_action"
+}
+
+#import {
+#  to = aws_sns_topic.team_spend_action
+#  id = "arn:aws:sns:eu-west-2:0123456789012:team-spend-action"
 #}
 
 # aws sns list-topics | grep Spend
@@ -123,6 +156,24 @@ resource "aws_ce_anomaly_monitor" "service_monitor" {
 #         "team": "spend"
 #     }
 # }
+
+resource "aws_sns_topic_subscription" "team_spend_alert_email_subscription" {
+  topic_arn = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-alert"
+  protocol  = "email"
+  endpoint  = "${var.alert_email_address}"
+}
+
+resource "aws_sns_topic_subscription" "team_spend_action_email_subscription" {
+  topic_arn = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-action"
+  protocol  = "email"
+  endpoint  = "${var.action_email_address}"
+}
+
+resource "aws_sns_topic_subscription" "team_spend_action_lambda_subscription" {
+  topic_arn = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-action"
+  protocol  = "lambda"
+  endpoint  = "arn:aws:lambda:eu-west-2:${var.awsID}:function:team-spend-action"
+}
 
 #aws sns list-subscriptions | grep Spend
 #             "SubscriptionArn": "arn:aws:sns:eu-west-2:778666285893:TeamSpendAction:45909378-bd41-4d4d-afb1-96a17bd9eecc",
