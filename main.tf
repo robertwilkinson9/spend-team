@@ -1,5 +1,11 @@
 provider "aws" {
   region = "eu-west-2"
+# Tags to apply to all AWS resources by default
+  default_tags {
+    tags = {
+      Owner = "team-spend"
+    }
+  }
 }
 
 variable "awsID" {
