@@ -19,15 +19,23 @@ variable "awsID" {
 # it is a number but should it be a string? XXX
 }
 
+# I guess that these email addresses should have the capacity
+# to be lists - or something? XXX
+
 variable "alert_email_address" {
   description = "the email address for alerts"
   type = string
 }
 
+# it may be desirable for this to be null, or a list? XXX
+
 variable "action_email_address" {
   description = "the email address for actions"
   type = string
 }
+
+
+
 
 # aws ce get-anomaly-monitors
 # {
@@ -105,6 +113,52 @@ resource "aws_sns_topic" "team_spend_action" {
 #     }
 # }
 
+# need IAM role for the lambda to run as ...
+
+#robert@CIC001419:~/src/typescript/spend-team$ aws iam list-roles | grep DevOps
+#            "RoleName": "AWSReservedSSO_LD-DevOpsAccess_c56db55a3b79e611",
+#            "Arn": "arn:aws:iam::778666285893:role/aws-reserved/sso.amazonaws.com/eu-west-2/AWSReservedSSO_LD-DevOpsAccess_c56db55a3b79e611",
+#            "Description": "Permission Set for the RTNPlaygroundDevOps Learning and Development account users",
+#            "RoleName": "AWSReservedSSO_RTNDevOps-EngineerFullAccess_10f8c0cf65fd5e09",
+#            "Arn": "arn:aws:iam::778666285893:role/aws-reserved/sso.amazonaws.com/eu-west-2/AWSReservedSSO_RTNDevOps-EngineerFullAccess_10f8c0cf65fd5e09",
+#                            "AWS": "arn:aws:iam::477504957304:role/service-role/RTNDevOps-CodeBuild-service-role"
+#robert@CIC001419:~/src/typescript/spend-team$ aws iam get-role --role-name AWSReservedSSO_LD-DevOpsAccess_c56db55a3b79e611
+#{
+#    "Role": {
+#        "Path": "/aws-reserved/sso.amazonaws.com/eu-west-2/",
+#        "RoleName": "AWSReservedSSO_LD-DevOpsAccess_c56db55a3b79e611",
+#        "RoleId": "AROA3KTBATNC2UGVZQM5E",
+#        "Arn": "arn:aws:iam::778666285893:role/aws-reserved/sso.amazonaws.com/eu-west-2/AWSReservedSSO_LD-DevOpsAccess_c56db55a3b79e611",
+#        "CreateDate": "2021-12-01T11:15:37Z",
+#        "AssumeRolePolicyDocument": {
+#            "Version": "2012-10-17",
+#            "Statement": [
+#                {
+#                    "Effect": "Allow",
+#                    "Principal": {
+#                        "Federated": "arn:aws:iam::778666285893:saml-provider/AWSSSO_e8264dc942f31fa6_DO_NOT_DELETE"
+#                    },
+#                    "Action": [
+#                        "sts:AssumeRoleWithSAML",
+#                        "sts:TagSession"
+#                    ],
+#                    "Condition": {
+#                        "StringEquals": {
+#                            "SAML:aud": "https://signin.aws.amazon.com/saml"
+#                        }
+#                    }
+#                }
+#            ]
+#        },
+#        "Description": "Permission Set for the RTNPlaygroundDevOps Learning and Development account users",
+#        "MaxSessionDuration": 43200,
+#        "RoleLastUsed": {
+#            "LastUsedDate": "2024-08-19T15:35:05Z",
+#            "Region": "eu-west-2"
+#        }
+#    }
+#}
+#robert@CIC001419:~/src/typescript/spend-team$
 # The lambda function is written in typescript.
 # Lambdas must be deployed in Python or Javascript
 # We deploy a docker image containing the transpiled Typescript and move the resultant Javascript into AWS.
