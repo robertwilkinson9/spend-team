@@ -112,6 +112,41 @@ resource "aws_sns_topic" "team_spend_action" {
 
 # need IAM role for the lambda to run as ...
 
+# https://stackoverflow.com/questions/57288992/terraform-how-to-create-iam-role-for-aws-lambda-and-deploy-both gives
+
+data "aws_iam_policy_document" "AWSLambdaTrustPolicy" {
+  statement {
+    actions    = ["sts:AssumeRole"]
+    effect     = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "terraform_function_role" {
+  name               = "terraform_function_role"
+  assume_role_policy = data.aws_iam_policy_document.AWSLambdaTrustPolicy.json
+}
+
+resource "aws_iam_role_policy_attachment" "terraform_lambda_policy" {
+  role       = aws_iam_role.terraform_function_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_lambda_function" "terraform_function" {
+  function_name    = "team-spend-action"
+  handler          = "index.handler"
+  role             = aws_iam_role.terraform_function_role.arn
+  runtime          = "nodejs8.10"
+  image_uri        = "778666285893.dkr.ecr.eu-west-2.amazonaws.com/team-spend-action:latest"
+#         "ResolvedImageUri": "778666285893.dkr.ecr.eu-west-2.amazonaws.com/team-spend-action@sha256:d0ec757342ba64f8f80c524431989d778c45289bfe312a58fe2dfbc0fa604c4e"
+#     "Tags": {
+#         "team": "spend"
+#     }
+}
+
 #robert@CIC001419:~/src/typescript/spend-team$ aws iam list-roles | grep DevOps
 #            "RoleName": "AWSReservedSSO_LD-DevOpsAccess_c56db55a3b79e611",
 #            "Arn": "arn:aws:iam::778666285893:role/aws-reserved/sso.amazonaws.com/eu-west-2/AWSReservedSSO_LD-DevOpsAccess_c56db55a3b79e611",
