@@ -34,9 +34,6 @@ variable "action_email_address" {
   type = string
 }
 
-
-
-
 # aws ce get-anomaly-monitors
 # {
 #     "AnomalyMonitors": [
@@ -122,6 +119,7 @@ resource "aws_sns_topic" "team_spend_action" {
 #            "RoleName": "AWSReservedSSO_RTNDevOps-EngineerFullAccess_10f8c0cf65fd5e09",
 #            "Arn": "arn:aws:iam::778666285893:role/aws-reserved/sso.amazonaws.com/eu-west-2/AWSReservedSSO_RTNDevOps-EngineerFullAccess_10f8c0cf65fd5e09",
 #                            "AWS": "arn:aws:iam::477504957304:role/service-role/RTNDevOps-CodeBuild-service-role"
+
 #robert@CIC001419:~/src/typescript/spend-team$ aws iam get-role --role-name AWSReservedSSO_LD-DevOpsAccess_c56db55a3b79e611
 #{
 #    "Role": {
@@ -158,6 +156,135 @@ resource "aws_sns_topic" "team_spend_action" {
 #        }
 #    }
 #}
+
+# $ aws iam get-role --role-name PlaygroundGenericRoleForServices
+# {
+#     "Role": {
+#         "Path": "/",
+#         "RoleName": "PlaygroundGenericRoleForServices",
+#         "RoleId": "AROA3KTBATNCX6FSCQATE",
+#         "Arn": "arn:aws:iam::778666285893:role/PlaygroundGenericRoleForServices",
+#         "CreateDate": "2021-12-02T12:52:03Z",
+#         "AssumeRolePolicyDocument": {
+#             "Version": "2012-10-17",
+#             "Statement": [
+#                 {
+#                     "Effect": "Allow",
+#                     "Principal": {
+#                         "Service": [
+#                             "health.amazonaws.com",
+#                             "ec2scheduled.amazonaws.com",
+#                             "events.amazonaws.com",
+#                             "sms.amazonaws.com",
+#                             "codebuild.amazonaws.com",
+#                             "appsync.amazonaws.com",
+#                             "rds.amazonaws.com",
+#                             "waf-regional.amazonaws.com",
+#                             "dynamodb.amazonaws.com",
+#                             "application-autoscaling.amazonaws.com",
+#                             "monitoring.rds.amazonaws.com",
+#                             "replication.dynamodb.amazonaws.com",
+#                             "ecs-tasks.amazonaws.com",
+#                             "sns.amazonaws.com",
+#                             "config-conforms.amazonaws.com",
+#                             "backup.amazonaws.com",
+#                             "replicator.lambda.amazonaws.com",
+#                             "codepipeline.amazonaws.com",
+#                             "logger.cloudfront.amazonaws.com",
+#                             "ecs.application-autoscaling.amazonaws.com",
+#                             "s3.amazonaws.com",
+#                             "apigateway.amazonaws.com",
+#                             "ec2.amazonaws.com",
+#                             "guardduty.amazonaws.com",
+#                             "dynamodb.application-autoscaling.amazonaws.com",
+#                             "ec2.application-autoscaling.amazonaws.com",
+#                             "qldb.amazonaws.com",
+#                             "elasticloadbalancing.amazonaws.com",
+#                             "elasticache.amazonaws.com",
+#                             "elasticfilesystem.amazonaws.com",
+#                             "eks.amazonaws.com",
+#                             "lambda.amazonaws.com",
+#                             "shield.amazonaws.com",
+#                             "sqs.amazonaws.com",
+#                             "cloudfront.amazonaws.com",
+#                             "ops.apigateway.amazonaws.com",
+#                             "config.amazonaws.com",
+#                             "tagpolicies.tag.amazonaws.com",
+#                             "athena.amazonaws.com",
+#                             "elasticbeanstalk.amazonaws.com",
+#                             "inspector.amazonaws.com",
+#                             "lightsail.amazonaws.com",
+#                             "codedeploy.amazonaws.com",
+#                             "ecs.amazonaws.com",
+#                             "opsworks.amazonaws.com",
+#                             "dms.amazonaws.com",
+#                             "cloudformation.amazonaws.com",
+#                             "kms.amazonaws.com",
+#                             "resource-groups.amazonaws.com",
+#                             "ssm.amazonaws.com",
+#                             "autoscaling.amazonaws.com",
+#                             "fsx.amazonaws.com",
+#                             "opsworks-cm.amazonaws.com",
+#                             "serverlessrepo.amazonaws.com",
+#                             "managedservices.amazonaws.com",
+#                             "eks-fargate-pods.amazonaws.com",
+#                             "cloudtrail.amazonaws.com",
+#                             "states.amazonaws.com",
+#                             "ses.amazonaws.com",
+#                             "securityhub.amazonaws.com",
+#                             "logs.amazonaws.com",
+#                             "dlm.amazonaws.com",
+#                             "ec2fleet.amazonaws.com",
+#                             "codecommit.amazonaws.com"
+#                         ]
+#                     },
+#                     "Action": "sts:AssumeRole"
+#                 }
+#             ]
+#         },
+#         "Description": "",
+#         "MaxSessionDuration": 3600,
+#         "Tags": [
+#             {
+#                 "Key": "Name",
+#                 "Value": "PlaygroundGenericRole"
+#             },
+#             {
+#                 "Key": "cost:association",
+#                 "Value": "NSC"
+#             },
+#             {
+#                 "Key": "resource:environment",
+#                 "Value": "Core"
+#             },
+#             {
+#                 "Key": "information:designation",
+#                 "Value": "InternalUseOnly"
+#             },
+#             {
+#                 "Key": "resource:owner",
+#                 "Value": "RTN"
+#             },
+#             {
+#                 "Key": "information:owner",
+#                 "Value": "1160445"
+#             },
+#             {
+#                 "Key": "cost:allocation",
+#                 "Value": "600015786"
+#             },
+#             {
+#                 "Key": "cost:owner",
+#                 "Value": "1137969"
+#             }
+#         ],
+#         "RoleLastUsed": {
+#             "LastUsedDate": "2024-08-19T19:01:17Z",
+#             "Region": "eu-west-2"
+#         }
+#     }
+# }
+
 #robert@CIC001419:~/src/typescript/spend-team$
 # The lambda function is written in typescript.
 # Lambdas must be deployed in Python or Javascript
