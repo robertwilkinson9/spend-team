@@ -57,7 +57,7 @@ resource "aws_ce_anomaly_monitor" "service_monitor" {
 }
 
 #import {
-#  to = aws_ce_anomaly_monitor.example
+#  to = aws_ce_anomaly_monitor.service_monitor
 #  id = "costAnomalyMonitorARN"
 #}
 
@@ -67,7 +67,7 @@ resource "aws_sns_topic" "team_spend_alert" {
 
 #import {
 #  to = aws_sns_topic.team_spend_alert
-#  id = "arn:aws:sns:eu-west-2:0123456789012:team-spend-alert"
+#  id = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-alert.arn"
 #}
 
 resource "aws_sns_topic" "team_spend_action" {
@@ -137,14 +137,13 @@ resource "aws_iam_role_policy_attachment" "terraform_lambda_policy" {
 
 resource "aws_lambda_function" "terraform_function" {
   function_name    = "team-spend-action"
-  handler          = "index.handler"
+  package_type     = "Image"
+  handler          = "index.js"
   role             = aws_iam_role.terraform_function_role.arn
   runtime          = "nodejs8.10"
   image_uri        = "778666285893.dkr.ecr.eu-west-2.amazonaws.com/team-spend-action:latest"
+  tags             = {"team": "spend"}
 #         "ResolvedImageUri": "778666285893.dkr.ecr.eu-west-2.amazonaws.com/team-spend-action@sha256:d0ec757342ba64f8f80c524431989d778c45289bfe312a58fe2dfbc0fa604c4e"
-#     "Tags": {
-#         "team": "spend"
-#     }
 }
 
 #robert@CIC001419:~/src/typescript/spend-team$ aws iam list-roles | grep DevOps
@@ -440,6 +439,138 @@ resource "aws_sns_topic_subscription" "team_spend_action_lambda_subscription" {
 #         "SubscriptionArn": "arn:aws:sns:eu-west-2:778666285893:TeamSpendAlert:da58f922-d3fb-4245-96e9-f639a757a8de"
 #     }
 # }
+
+resource "aws_ce_anomaly_subscription" "anomaly_subscription_20" {
+  name      = "TeamSpend20"
+  frequency = "IMMEDIATE"
+
+  monitor_arn_list = [
+    aws_ce_anomaly_monitor.service_monitor.arn
+  ]
+
+  subscriber {
+    type    = "SNS"
+    address = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-alert"
+  }
+
+  threshold_expression {
+    dimension {
+      key           = "ANOMALY_TOTAL_IMPACT_ABSOLUTE"
+      match_options = ["GREATER_THAN_OR_EQUAL"]
+      values        = ["1"]
+    }
+  }
+}
+
+resource "aws_ce_anomaly_subscription" "anomaly_subscription_40" {
+  name      = "TeamSpend40"
+  frequency = "IMMEDIATE"
+
+  monitor_arn_list = [
+    aws_ce_anomaly_monitor.service_monitor.arn
+  ]
+
+  subscriber {
+    type    = "SNS"
+    address = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-alert"
+  }
+
+  threshold_expression {
+    dimension {
+      key           = "ANOMALY_TOTAL_IMPACT_ABSOLUTE"
+      match_options = ["GREATER_THAN_OR_EQUAL"]
+      values        = ["2"]
+    }
+  }
+}
+
+resource "aws_ce_anomaly_subscription" "anomaly_subscription_60" {
+  name      = "TeamSpend60"
+  frequency = "IMMEDIATE"
+
+  monitor_arn_list = [
+    aws_ce_anomaly_monitor.service_monitor.arn
+  ]
+
+  subscriber {
+    type    = "SNS"
+    address = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-alert"
+  }
+
+  threshold_expression {
+    dimension {
+      key           = "ANOMALY_TOTAL_IMPACT_ABSOLUTE"
+      match_options = ["GREATER_THAN_OR_EQUAL"]
+      values        = ["3"]
+    }
+  }
+}
+
+resource "aws_ce_anomaly_subscription" "anomaly_subscription_80" {
+  name      = "TeamSpend80"
+  frequency = "IMMEDIATE"
+
+  monitor_arn_list = [
+    aws_ce_anomaly_monitor.service_monitor.arn
+  ]
+
+  subscriber {
+    type    = "SNS"
+    address = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-alert"
+  }
+
+  threshold_expression {
+    dimension {
+      key           = "ANOMALY_TOTAL_IMPACT_ABSOLUTE"
+      match_options = ["GREATER_THAN_OR_EQUAL"]
+      values        = ["4"]
+    }
+  }
+}
+
+resource "aws_ce_anomaly_subscription" "anomaly_subscription_action" {
+  name      = "TeamSpendAction"
+  frequency = "IMMEDIATE"
+
+  monitor_arn_list = [
+    aws_ce_anomaly_monitor.service_monitor.arn
+  ]
+
+  subscriber {
+    type    = "SNS"
+    address = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-alert"
+  }
+
+  threshold_expression {
+    dimension {
+      key           = "ANOMALY_TOTAL_IMPACT_ABSOLUTE"
+      match_options = ["GREATER_THAN_OR_EQUAL"]
+      values        = ["5"]
+    }
+  }
+}
+
+# aws ce get-anomaly-subscriptions
+# {
+#     "AnomalySubscriptions": [
+#         {
+#             "SubscriptionArn": "arn:aws:ce::778666285893:anomalysubscription/584c6dc6-9992-4826-90fa-b223f068db3d",
+#             "AccountId": "778666285893",
+#             "MonitorArnList": [
+#                 "arn:aws:ce::778666285893:anomalymonitor/c1dbe37d-8fe1-4654-9ff1-8d4a18f29c34"
+#             ],
+#             "Subscribers": [
+#                 {
+#                     "Address": "arn:aws:sns:eu-west-2:778666285893:TeamSpendAlert",
+#                     "Type": "SNS",
+#                     "Status": "CONFIRMED"
+#                 }
+#             ],
+#             "Threshold": 1.0,
+#             "Frequency": "IMMEDIATE",
+#             "SubscriptionName": "TeamSpend20",
+#             "ThresholdExpression": {
+#                 "Dimensions": {
 
 # aws ce get-anomaly-subscriptions
 # {
