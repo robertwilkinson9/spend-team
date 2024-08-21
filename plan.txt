@@ -279,7 +279,7 @@ OpenTofu will perform the following actions:
       [32m+[0m[0m qualified_invoke_arn           = (known after apply)
       [32m+[0m[0m reserved_concurrent_executions = -1
       [32m+[0m[0m role                           = (known after apply)
-      [32m+[0m[0m runtime                        = "nodejs8.10"
+      [32m+[0m[0m runtime                        = "nodejs20.x"
       [32m+[0m[0m signing_job_arn                = (known after apply)
       [32m+[0m[0m signing_profile_version_arn    = (known after apply)
       [32m+[0m[0m skip_destroy                   = false
