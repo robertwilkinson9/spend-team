@@ -240,6 +240,17 @@ OpenTofu will perform the following actions:
       [32m+[0m[0m version                        = (known after apply)
     }
 
+[1m  # aws_lambda_permission.with_sns[0m will be created
+[0m  [32m+[0m[0m resource "aws_lambda_permission" "with_sns" {
+      [32m+[0m[0m action              = "lambda:InvokeFunction"
+      [32m+[0m[0m function_name       = "team-spend-action"
+      [32m+[0m[0m id                  = (known after apply)
+      [32m+[0m[0m principal           = "sns.amazonaws.com"
+      [32m+[0m[0m source_arn          = (known after apply)
+      [32m+[0m[0m statement_id        = "AllowExecutionFromSNS"
+      [32m+[0m[0m statement_id_prefix = (known after apply)
+    }
+
 [1m  # aws_sns_topic.team_spend_action[0m will be created
 [0m  [32m+[0m[0m resource "aws_sns_topic" "team_spend_action" {
       [32m+[0m[0m arn                         = (known after apply)
@@ -324,5 +335,5 @@ OpenTofu will perform the following actions:
       [32m+[0m[0m topic_arn                       = "arn:aws:sns:eu-west-2:778666285893:team-spend-alert"
     }
 
-[1mPlan:[0m 14 to add, 0 to change, 0 to destroy.
+[1mPlan:[0m 15 to add, 0 to change, 0 to destroy.
 [0m
