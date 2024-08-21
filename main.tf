@@ -1,12 +1,5 @@
-# this file should become a module after development
-# when so, the provider stanza should be dropped
-# and presumably the awsID itoo? which similarly should be
-# defined at the top level. XXX
-
 module "team_spend_anomaly_monitor_response" {
   source  = "./modules/anomaly_monitor_response"
-
-#  version = "1.0.0"
 
   awsID = var.awsID
   alert_email_address = var.alert_email_address
@@ -18,7 +11,15 @@ provider "aws" {
 # Tags to apply to all AWS resources by default
   default_tags {
     tags = {
-      Owner = "team-spend"
+      "cost:owner" = "team-spend-XXX"
+      "cost:allocation" = "who-knows-XXX"
+      "information:owner" = "team-spend-XXX"
+      "information:designation" = "InternalUseOnly"
+      "information:classification" = "Unrestricted"
+      "information:context" = "Public"
+      "resource:owner" = "team-spend-XXX"
+      "resource:role" = "Operations"
+      "metadata:version:tag" = "0.0.1"
     }
   }
 }
@@ -26,7 +27,6 @@ provider "aws" {
 variable "awsID" {
   description = "the AWS ID to use for all resources"
   type = number
-# it is a number but should it be a string? XXX
 }
 
 # I guess that these email addresses should have the capacity
