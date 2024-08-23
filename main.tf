@@ -2,8 +2,7 @@ module "team_spend_anomaly_monitor_response" {
   source  = "./modules/anomaly_monitor_response"
 
   awsID = var.awsID
-  alert_email_address = var.alert_email_address
-  action_email_address = var.action_email_address
+  team_spend_emails = var.team_spend_emails
 }
 
 provider "aws" {
@@ -29,17 +28,8 @@ variable "awsID" {
   type = number
 }
 
-# I guess that these email addresses should have the capacity
-# to be lists - or something? XXX
-
-variable "alert_email_address" {
+variable "team_spend_emails" {
   description = "the email address for alerts"
-  type = string
-}
-
-# it may be desirable for this to be null, or a list? XXX
-
-variable "action_email_address" {
-  description = "the email address for actions"
-  type = string
+  type = list(string)
+  default = [""]
 }

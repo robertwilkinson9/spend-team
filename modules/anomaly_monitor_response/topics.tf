@@ -2,30 +2,22 @@ resource "aws_sns_topic" "team_spend_alert" {
   name = "team-spend-alert"
 }
 
-#import {
-#  to = aws_sns_topic.team_spend_alert
-#  id = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-alert.arn"
-#}
-
 resource "aws_sns_topic" "team_spend_action" {
   name = "team-spend_action"
 }
 
-#import {
-#  to = aws_sns_topic.team_spend_action
-#  id = "arn:aws:sns:eu-west-2:0123456789012:team-spend-action"
-#}
-
 resource "aws_sns_topic_subscription" "team_spend_alert_email_subscription" {
+  for_each = {for email in var.team_spend_emails: email => email}
   topic_arn = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-alert"
   protocol  = "email"
-  endpoint  = "${var.alert_email_address}"
+  endpoint  = each.value
 }
 
 resource "aws_sns_topic_subscription" "team_spend_action_email_subscription" {
+  for_each = {for email in var.team_spend_emails: email => email}
   topic_arn = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-action"
   protocol  = "email"
-  endpoint  = "${var.action_email_address}"
+  endpoint  = each.value
 }
 
 resource "aws_sns_topic_subscription" "team_spend_action_lambda_subscription" {
