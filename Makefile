@@ -27,6 +27,10 @@ update-function: push
 .PHONY: run
 run: build
 	docker run --platform linux/amd64 -p 9000:8080 --env AWS_ACCESS_KEY_ID=$${AWS_ACCESS_KEY_ID} --env AWS_SECRET_ACCESS_KEY=$${AWS_SECRET_ACCESS_KEY} --env AWS_SESSION_TOKEN=$${AWS_SESSION_TOKEN} team-spend-action:latest
-.PHONY: validate
-validate:
+.PHONY: tfv
+tfv:
 	tofu validate
+tfp: tfv teamspend.plan
+	tofu plan -out teamspend.plan
+tfs: teamspend.plan
+	tofu show teamspend.plan > plan.txt
