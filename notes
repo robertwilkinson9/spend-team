@@ -251,3 +251,4 @@ export TF_VAR_awsID=778666285893
 tofu plan -out tofu.plan && tofu show tofu.plan > plan.txt
 tofu validate && tofu plan -out tofu.plan && tofu show tofu.plan > plan.txt
 cat plan.txt | more
+export TF_VAR_team_spend_emails='["a@b.c", "d@e.f"]'

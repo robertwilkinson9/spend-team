@@ -367,12 +367,28 @@ OpenTofu will perform the following actions:
       [32m+[0m[0m tracing_config              = (known after apply)
     }
 
-[1m  # module.team_spend_anomaly_monitor_response.aws_sns_topic_subscription.team_spend_action_email_subscription[0m will be created
+[1m  # module.team_spend_anomaly_monitor_response.aws_sns_topic_subscription.team_spend_action_email_subscription["a@b.c"][0m will be created
 [0m  [32m+[0m[0m resource "aws_sns_topic_subscription" "team_spend_action_email_subscription" {
       [32m+[0m[0m arn                             = (known after apply)
       [32m+[0m[0m confirmation_timeout_in_minutes = 1
       [32m+[0m[0m confirmation_was_authenticated  = (known after apply)
-      [32m+[0m[0m endpoint                        = "alpha@beta.delta"
+      [32m+[0m[0m endpoint                        = "a@b.c"
+      [32m+[0m[0m endpoint_auto_confirms          = false
+      [32m+[0m[0m filter_policy_scope             = (known after apply)
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m owner_id                        = (known after apply)
+      [32m+[0m[0m pending_confirmation            = (known after apply)
+      [32m+[0m[0m protocol                        = "email"
+      [32m+[0m[0m raw_message_delivery            = false
+      [32m+[0m[0m topic_arn                       = "arn:aws:sns:eu-west-2:778666285893:team-spend-action"
+    }
+
+[1m  # module.team_spend_anomaly_monitor_response.aws_sns_topic_subscription.team_spend_action_email_subscription["d@e.f"][0m will be created
+[0m  [32m+[0m[0m resource "aws_sns_topic_subscription" "team_spend_action_email_subscription" {
+      [32m+[0m[0m arn                             = (known after apply)
+      [32m+[0m[0m confirmation_timeout_in_minutes = 1
+      [32m+[0m[0m confirmation_was_authenticated  = (known after apply)
+      [32m+[0m[0m endpoint                        = "d@e.f"
       [32m+[0m[0m endpoint_auto_confirms          = false
       [32m+[0m[0m filter_policy_scope             = (known after apply)
       [32m+[0m[0m id                              = (known after apply)
@@ -399,12 +415,12 @@ OpenTofu will perform the following actions:
       [32m+[0m[0m topic_arn                       = "arn:aws:sns:eu-west-2:778666285893:team-spend-action"
     }
 
-[1m  # module.team_spend_anomaly_monitor_response.aws_sns_topic_subscription.team_spend_alert_email_subscription[0m will be created
+[1m  # module.team_spend_anomaly_monitor_response.aws_sns_topic_subscription.team_spend_alert_email_subscription["a@b.c"][0m will be created
 [0m  [32m+[0m[0m resource "aws_sns_topic_subscription" "team_spend_alert_email_subscription" {
       [32m+[0m[0m arn                             = (known after apply)
       [32m+[0m[0m confirmation_timeout_in_minutes = 1
       [32m+[0m[0m confirmation_was_authenticated  = (known after apply)
-      [32m+[0m[0m endpoint                        = "alpha@beta.delta"
+      [32m+[0m[0m endpoint                        = "a@b.c"
       [32m+[0m[0m endpoint_auto_confirms          = false
       [32m+[0m[0m filter_policy_scope             = (known after apply)
       [32m+[0m[0m id                              = (known after apply)
@@ -415,5 +431,21 @@ OpenTofu will perform the following actions:
       [32m+[0m[0m topic_arn                       = "arn:aws:sns:eu-west-2:778666285893:team-spend-alert"
     }
 
-[1mPlan:[0m 15 to add, 0 to change, 0 to destroy.
+[1m  # module.team_spend_anomaly_monitor_response.aws_sns_topic_subscription.team_spend_alert_email_subscription["d@e.f"][0m will be created
+[0m  [32m+[0m[0m resource "aws_sns_topic_subscription" "team_spend_alert_email_subscription" {
+      [32m+[0m[0m arn                             = (known after apply)
+      [32m+[0m[0m confirmation_timeout_in_minutes = 1
+      [32m+[0m[0m confirmation_was_authenticated  = (known after apply)
+      [32m+[0m[0m endpoint                        = "d@e.f"
+      [32m+[0m[0m endpoint_auto_confirms          = false
+      [32m+[0m[0m filter_policy_scope             = (known after apply)
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m owner_id                        = (known after apply)
+      [32m+[0m[0m pending_confirmation            = (known after apply)
+      [32m+[0m[0m protocol                        = "email"
+      [32m+[0m[0m raw_message_delivery            = false
+      [32m+[0m[0m topic_arn                       = "arn:aws:sns:eu-west-2:778666285893:team-spend-alert"
+    }
+
+[1mPlan:[0m 17 to add, 0 to change, 0 to destroy.
 [0m
