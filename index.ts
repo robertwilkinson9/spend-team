@@ -222,6 +222,14 @@ export const handler = async (
             const ac_id_to_close = root_cause.LinkedAccount;
             if (!closed_accounts.has(ac_id_to_close)) {
               console.log(`Would close Account ${ac_id_to_close}`);
+/*
+const client = new OrganizationsClient(config);
+const input = { // CloseAccountRequest
+  AccountId: "STRING_VALUE", // required
+};
+const command = new CloseAccountCommand(input);
+const response = await client.send(command)
+*/
               closed_accounts.add(ac_id_to_close);
             }
           }
