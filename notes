@@ -245,8 +245,8 @@ robert@CIC001419:~/src/typescript/spend-team$ aws ecr create-repository --reposi
 }
 robert@CIC001419:~/src/typescript/spend-team$ aws ce get-anomalies --date-interval 'StartDate=2024-08-01,EndDate=2024-08-06'
 
-export TF_VAR_alert_email_address=alpha@beta.delta
-export TF_VAR_action_email_address=$TF_VAR_alert_email_address
+#export TF_VAR_alert_email_address=alpha@beta.delta
+#export TF_VAR_action_email_address=$TF_VAR_alert_email_address
 export TF_VAR_awsID=778666285893
 tofu plan -out tofu.plan && tofu show tofu.plan > plan.txt
 tofu validate && tofu plan -out tofu.plan && tofu show tofu.plan > plan.txt
