@@ -30,7 +30,7 @@ run: build
 .PHONY: tfv
 tfv:
 	tofu validate
-tfp: tfv teamspend.plan
+tfp: tfv
 	tofu plan -out teamspend.plan
 tfs: teamspend.plan
 	tofu show teamspend.plan > plan.txt

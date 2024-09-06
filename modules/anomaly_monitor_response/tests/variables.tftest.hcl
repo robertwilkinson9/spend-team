@@ -6,11 +6,11 @@ run "test_awsID" {
     }
 }
 
-#run "test_alphaID" {
+#run "test_shortID" {
 #    command = plan
 #
 #    variables {
-#	awsID = "alphabetic"
+#	awsID = "1234567890"
 #    }
 #
 #    expect_failures = [

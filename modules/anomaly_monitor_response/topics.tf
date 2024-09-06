@@ -3,7 +3,7 @@ resource "aws_sns_topic" "team_spend_alert" {
 }
 
 resource "aws_sns_topic" "team_spend_action" {
-  name = "team-spend_action"
+  name = "team-spend-action"
 }
 
 resource "aws_sns_topic_subscription" "team_spend_alert_email_subscription" {
