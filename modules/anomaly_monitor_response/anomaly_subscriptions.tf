@@ -8,7 +8,7 @@ resource "aws_ce_anomaly_subscription" "anomaly_subscription_20" {
 
   subscriber {
     type    = "SNS"
-    address = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-alert"
+    address = "arn:aws:sns:${var.AWS_REGION}:${var.awsID}:team-spend-alert"
   }
 
   threshold_expression {
@@ -30,7 +30,7 @@ resource "aws_ce_anomaly_subscription" "anomaly_subscription_40" {
 
   subscriber {
     type    = "SNS"
-    address = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-alert"
+    address = "arn:aws:sns:${var.AWS_REGION}:${var.awsID}:team-spend-alert"
   }
 
   threshold_expression {
@@ -52,7 +52,7 @@ resource "aws_ce_anomaly_subscription" "anomaly_subscription_60" {
 
   subscriber {
     type    = "SNS"
-    address = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-alert"
+    address = "arn:aws:sns:${var.AWS_REGION}:${var.awsID}:team-spend-alert"
   }
 
   threshold_expression {
@@ -74,7 +74,7 @@ resource "aws_ce_anomaly_subscription" "anomaly_subscription_80" {
 
   subscriber {
     type    = "SNS"
-    address = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-alert"
+    address = "arn:aws:sns:${var.AWS_REGION}:${var.awsID}:team-spend-alert"
   }
 
   threshold_expression {
@@ -96,7 +96,7 @@ resource "aws_ce_anomaly_subscription" "anomaly_subscription_action" {
 
   subscriber {
     type    = "SNS"
-    address = "arn:aws:sns:eu-west-2:${var.awsID}:team-spend-alert"
+    address = "arn:aws:sns:${var.AWS_REGION}:${var.awsID}:team-spend-alert"
   }
 
   threshold_expression {

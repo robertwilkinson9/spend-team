@@ -44,6 +44,6 @@ resource "aws_lambda_function" "terraform_function" {
   handler          = "index.js"
   role             = aws_iam_role.terraform_function_role.arn
   runtime          = "nodejs20.x"
-  image_uri        = "778666285893.dkr.ecr.eu-west-2.amazonaws.com/team-spend-action:latest"
+  image_uri        = "778666285893.dkr.ecr.${var.AWS_REGION}.amazonaws.com/team-spend-action:latest"
   tags             = {"team": "spend"}
 }
