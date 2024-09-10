@@ -6,6 +6,14 @@ run "test_awsID" {
     }
 }
 
+run "test_AWS_REGION" {
+    command = plan
+
+    variables {
+        AWS_REGION = "eu-west-2"
+    }
+}
+
 #run "test_shortID" {
 #    command = plan
 #
