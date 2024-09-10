@@ -1,3 +1,7 @@
+variable "AWS_REGION" {
+  default = "eu-west-2"
+}
+
 variable "awsID" {
   description = "the AWS ID to use for all resources"
   type = number

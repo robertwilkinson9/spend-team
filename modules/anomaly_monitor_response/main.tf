@@ -1,3 +1,7 @@
+provider "aws"{
+   region = var.AWS_REGION
+}
+
 resource "aws_ce_anomaly_monitor" "service_monitor" {
   name              = "AWSServiceMonitor"
   monitor_type      = "DIMENSIONAL"
