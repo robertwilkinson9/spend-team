@@ -1,3 +1,7 @@
+variables {
+    team_spend_emails=["a@b.c", "d@e.f"]
+}
+
 run "test_alert_name" {
     command = plan
 
@@ -19,10 +23,6 @@ run "test_action_name" {
 run "test_first_team_spend_alert_emails_protocol" {
     command = plan
 
-    variables {
-      team_spend_emails=["a@b.c", "d@e.f"]
-    }
-
     assert {
 	condition = aws_sns_topic_subscription.team_spend_alert_email_subscription["a@b.c"].protocol == "email"
         error_message = "Incorrect first aws_sns_topic_subscription alert protocol"
@@ -31,10 +31,6 @@ run "test_first_team_spend_alert_emails_protocol" {
 
 run "test_first_team_spend_alert_emails_endpoint" {
     command = plan
-
-    variables {
-      team_spend_emails=["a@b.c", "d@e.f"]
-    }
 
     assert {
 	condition = aws_sns_topic_subscription.team_spend_alert_email_subscription["a@b.c"].endpoint == "a@b.c"
@@ -45,10 +41,6 @@ run "test_first_team_spend_alert_emails_endpoint" {
 run "test_first_team_spend_alert_emails_topic_arn" {
     command = plan
 
-    variables {
-      team_spend_emails=["a@b.c", "d@e.f"]
-    }
-
     assert {
 	condition = aws_sns_topic_subscription.team_spend_alert_email_subscription["a@b.c"].topic_arn == "arn:aws:sns:${var.AWS_REGION}:${var.awsID}:team-spend-alert"
         error_message = "Incorrect first aws_sns_topic_subscription alert topic"
@@ -57,10 +49,6 @@ run "test_first_team_spend_alert_emails_topic_arn" {
 
 run "test_first_team_spend_action_emails_protocol" {
     command = plan
-
-    variables {
-      team_spend_emails=["a@b.c", "d@e.f"]
-    }
 
     assert {
 	condition = aws_sns_topic_subscription.team_spend_action_email_subscription["a@b.c"].protocol == "email"
@@ -71,10 +59,6 @@ run "test_first_team_spend_action_emails_protocol" {
 run "test_first_team_spend_action_emails_endpoint" {
     command = plan
 
-    variables {
-      team_spend_emails=["a@b.c", "d@e.f"]
-    }
-
     assert {
 	condition = aws_sns_topic_subscription.team_spend_action_email_subscription["a@b.c"].endpoint == "a@b.c"
         error_message = "Incorrect first aws_sns_topic_subscription action endpoint"
@@ -83,10 +67,6 @@ run "test_first_team_spend_action_emails_endpoint" {
 
 run "test_first_team_spend_action_emails_topic_arn" {
     command = plan
-
-    variables {
-      team_spend_emails=["a@b.c", "d@e.f"]
-    }
 
     assert {
 	condition = aws_sns_topic_subscription.team_spend_action_email_subscription["a@b.c"].topic_arn == "arn:aws:sns:${var.AWS_REGION}:${var.awsID}:team-spend-action"
@@ -97,10 +77,6 @@ run "test_first_team_spend_action_emails_topic_arn" {
 run "test_second_team_spend_alert_emails_protocol" {
     command = plan
 
-    variables {
-      team_spend_emails=["a@b.c", "d@e.f"]
-    }
-
     assert {
 	condition = aws_sns_topic_subscription.team_spend_alert_email_subscription["d@e.f"].protocol == "email"
         error_message = "Incorrect aws_sns_topic_subscription alert protocol"
@@ -109,10 +85,6 @@ run "test_second_team_spend_alert_emails_protocol" {
 
 run "test_second_team_spend_alert_emails_endpoint" {
     command = plan
-
-    variables {
-      team_spend_emails=["a@b.c", "d@e.f"]
-    }
 
     assert {
 	condition = aws_sns_topic_subscription.team_spend_alert_email_subscription["d@e.f"].endpoint == "d@e.f"
@@ -123,10 +95,6 @@ run "test_second_team_spend_alert_emails_endpoint" {
 run "test_second_team_spend_alert_emails_topic_arn" {
     command = plan
 
-    variables {
-      team_spend_emails=["a@b.c", "d@e.f"]
-    }
-
     assert {
 	condition = aws_sns_topic_subscription.team_spend_alert_email_subscription["d@e.f"].topic_arn == "arn:aws:sns:${var.AWS_REGION}:${var.awsID}:team-spend-alert"
         error_message = "Incorrect aws_sns_topic_subscription alert topic"
@@ -135,10 +103,6 @@ run "test_second_team_spend_alert_emails_topic_arn" {
 
 run "test_second_team_spend_action_emails_protocol" {
     command = plan
-
-    variables {
-      team_spend_emails=["a@b.c", "d@e.f"]
-    }
 
     assert {
 	condition = aws_sns_topic_subscription.team_spend_action_email_subscription["d@e.f"].protocol == "email"
@@ -149,10 +113,6 @@ run "test_second_team_spend_action_emails_protocol" {
 run "test_second_team_spend_action_emails_endpoint" {
     command = plan
 
-    variables {
-      team_spend_emails=["a@b.c", "d@e.f"]
-    }
-
     assert {
 	condition = aws_sns_topic_subscription.team_spend_action_email_subscription["d@e.f"].endpoint == "d@e.f"
         error_message = "Incorrect second aws_sns_topic_subscription action endpoint"
@@ -161,10 +121,6 @@ run "test_second_team_spend_action_emails_endpoint" {
 
 run "test_second_team_spend_action_emails_topic_arn" {
     command = plan
-
-    variables {
-      team_spend_emails=["a@b.c", "d@e.f"]
-    }
 
     assert {
 	condition = aws_sns_topic_subscription.team_spend_action_email_subscription["d@e.f"].topic_arn == "arn:aws:sns:${var.AWS_REGION}:${var.awsID}:team-spend-action"
